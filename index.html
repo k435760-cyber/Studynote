@@ -585,6 +585,8 @@ button.row:hover{ background:var(--surface-2); }
 @keyframes veilIn{ from{ opacity:0 } to{ opacity:1 } }
 @keyframes boxIn{ from{ opacity:0; transform:translate(-50%,-46%) scale(.97) } to{ opacity:1; transform:translate(-50%,-50%) scale(1) } }
 
+.pickhead{ position:sticky; top:0; z-index:1; background:var(--surface); padding:2px 0 9px; }
+.notice--flag{ border-color:var(--accent); color:var(--text); }
 .years{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; padding:4px 0 8px; }
 .year{
   padding:11px 4px; border-radius:10px;
@@ -1076,11 +1078,20 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.0.2"
+  VERSION:       "1.0.3"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.0.3",
+    d: "2026-09-10",
+    items: [
+      "구글 로그인 뒤 바로 가입되던 것을 고쳤습니다. 이제 태어난 해를 먼저 확인합니다.",
+      "만 14세 미만이면 보호자(법정대리인)의 동의를 확인한 뒤에 이용할 수 있습니다.",
+      "출생 년도는 나이 확인에만 쓰며, 프로필에서 언제든 바꿀 수 있습니다."
+    ]
+  },
   {
     v: "1.0.2",
     d: "2026-09-10",
@@ -1314,6 +1325,7 @@ function openModal(opt){
   }
   function onKey(e){
     if (e.key === "Escape" && modalStack[modalStack.length - 1] === handle){
+      if (opt.dismissible === false) return;   // 반드시 답해야 하는 모달
       e.stopPropagation();
       close();
     }
@@ -1608,7 +1620,7 @@ function paintProfile(){
   $("#mailValue").textContent = mail;
   $("#mailValue2").textContent = mail;
   $("#inpName").value = p.display_name || "";
-  $("#birthValue").textContent = p.birth_year ? (p.birth_year + "년") : "선택 안 함";
+  $("#birthValue").textContent = p.birth_year ? (p.birth_year + "년") : "확인 전";
   $("#navPoint").textContent = (p.points || 0) + "P";
   $("#sPoint").textContent = (p.points || 0) + "P";
   $("#sPoint2").textContent = (p.points || 0) + "P";
@@ -1618,8 +1630,7 @@ function paintProfile(){
   paintAvatar($("#btnAvatar"), p, name);
   paintAvatar($("#drawerAvatar"), p, name);
 
-  const age = p.birth_year ? (new Date().getFullYear() - p.birth_year) : null;
-  $("#minorBox").hidden = !(age !== null && age < 14);
+  $("#minorBox").hidden = !isMinor(p.birth_year);
 }
 function paintAvatar(el, p, name){
   if (!el) return;
@@ -1653,52 +1664,213 @@ async function saveProfile(){
   toast("프로필을 저장했습니다.");
 }
 
-/* ── 출생 년도 선택 모달 (자체 팝업) ── */
-function openYearModal(){
+/* ── 출생 년도 격자 (가입 확인 / 프로필 양쪽에서 씁니다) ── */
+function yearGrid(initial, onPick){
   const nowY = new Date().getFullYear();
-  const wrap = document.createElement("div");
-  wrap.setAttribute("data-no-swipe", "");
-
   const grid = document.createElement("div");
   grid.className = "years";
-  let picked = S.profile.birth_year || null;
-
   for (let y = nowY; y >= 1940; y--){
     const b = document.createElement("button");
     b.className = "year";
     b.type = "button";
     b.textContent = y;
-    b.setAttribute("aria-pressed", String(picked === y));
+    b.setAttribute("aria-pressed", String(initial === y));
     b.addEventListener("click", function(){
-      picked = y;
       $$(".year", grid).forEach(function(x){ x.setAttribute("aria-pressed", "false"); });
       b.setAttribute("aria-pressed", "true");
+      if (onPick) onPick(y);
     });
     grid.appendChild(b);
   }
-  wrap.appendChild(grid);
+  setTimeout(function(){
+    const sel = $('.year[aria-pressed="true"]', grid);
+    if (sel && sel.scrollIntoView) sel.scrollIntoView({ block:"center" });
+  }, 40);
+  return grid;
+}
 
-  const m = openModal({
+/* ── 출생 년도 바꾸기 모달 (프로필) ── */
+function openYearModal(){
+  const wrap = document.createElement("div");
+  wrap.setAttribute("data-no-swipe", "");
+  let picked = S.profile.birth_year || null;
+  wrap.appendChild(yearGrid(picked, function(y){ picked = y; }));
+
+  return openModal({
     title: "출생 년도",
     desc: "만 14세 미만인지 확인하는 데에만 사용합니다.",
     body: wrap,
     actions: [
-      { label:"선택 안 함", variant:"ghost", onClick: function(){ applyYear(null); } },
-      { label:"선택", variant:"primary", onClick: function(){ applyYear(picked); } }
+      { label:"취소", variant:"ghost" },
+      { label:"선택", variant:"primary", onClick: function(){
+          if (!picked){ toast("출생 년도를 골라주세요."); return false; }
+          applyYear(picked);
+        } }
     ]
   });
 
-  const sel = $('.year[aria-pressed="true"]', grid);
-  if (sel) setTimeout(function(){ sel.scrollIntoView({ block:"center" }); }, 40);
-
-  function applyYear(y){
+  async function applyYear(y){
+    /* 만 14세 미만으로 바꾸면 보호자 동의를 먼저 확인합니다. */
+    const uid = S.user && S.user.id;
+    if (isMinor(y)){
+      if (!hasConsent(uid)){
+        const ok = await askGuardian(y);
+        if (!ok){
+          toast("보호자 동의가 없어 되돌렸습니다.");
+          return;
+        }
+        setConsent(uid, true);
+      }
+    } else {
+      setConsent(uid, false);
+    }
     S.profile.birth_year = y;
-    $("#birthValue").textContent = y ? (y + "년") : "선택 안 함";
-    const age = y ? (new Date().getFullYear() - y) : null;
-    $("#minorBox").hidden = !(age !== null && age < 14);
+    $("#birthValue").textContent = y + "년";
+    $("#minorBox").hidden = !isMinor(y);
     toast("저장 버튼을 눌러야 반영됩니다.");
   }
-  return m;
+}
+
+/* ===================== [9-b] 나이 확인 / 보호자 동의 =====================
+   개인정보 처리방침 3항: 만 14세 미만은 법정대리인의 동의를 먼저 받습니다.
+   그래서 구글 로그인 뒤 출생 년도가 없으면 앱으로 들어가기 전에 반드시 묻습니다.
+   · 연 나이(올해 - 출생 년도) 기준입니다. 생일까지 따지려면 isMinor 만 고치면 됩니다.
+   · 보호자 동의 여부는 이 기기에만 기록합니다(sr_profiles 에 칸이 없습니다).
+     계정에 남기려면 sr_profiles 에 guardian_consent 컬럼을 만들고
+     setConsent/hasConsent 를 그 칸을 읽고 쓰도록 바꾸면 됩니다. */
+
+const CONSENT_KEY = "jari.consent.";
+
+function ageOf(year){ return year ? (new Date().getFullYear() - Number(year)) : null; }
+function isMinor(year){ const a = ageOf(year); return a !== null && a < 14; }
+function hasConsent(uid){
+  if (!uid) return false;
+  try { return localStorage.getItem(CONSENT_KEY + uid) === "1"; } catch (e) { return false; }
+}
+function setConsent(uid, on){
+  if (!uid) return;
+  try {
+    if (on) localStorage.setItem(CONSENT_KEY + uid, "1");
+    else localStorage.removeItem(CONSENT_KEY + uid);
+  } catch (e) {}
+}
+
+/* 가입 직후 나이 확인 — 고르거나 로그아웃하기 전에는 닫히지 않습니다. */
+function askBirthYear(){
+  return new Promise(function(resolve){
+    const wrap = document.createElement("div");
+    wrap.setAttribute("data-no-swipe", "");
+    let picked = null;
+
+    const head = document.createElement("div");
+    head.className = "pickhead";
+    const note = document.createElement("div");
+    note.className = "notice";
+    note.textContent = "아래에서 태어난 해를 골라주세요.";
+    head.appendChild(note);
+
+    wrap.appendChild(head);
+    wrap.appendChild(yearGrid(null, function(y){
+      picked = y;
+      note.classList.remove("notice--flag");
+      note.textContent = isMinor(y)
+        ? y + "년생 · 만 14세 미만이라 보호자(법정대리인)의 동의가 필요합니다."
+        : y + "년생 · 올해 " + ageOf(y) + "세입니다.";
+    }));
+
+    let done = false;
+    openModal({
+      title: "나이 확인",
+      desc: "만 14세 미만인지 확인하기 위해 출생 년도가 필요합니다. 이 확인 외의 용도로는 쓰지 않습니다.",
+      body: wrap,
+      dismissible: false,
+      onClose: function(){ if (!done) resolve(null); },
+      actions: [
+        { label:"로그아웃", variant:"ghost", onClick: function(){ done = true; resolve(null); } },
+        { label:"확인", variant:"primary", onClick: function(){
+            if (!picked){
+              note.textContent = "태어난 해를 골라야 다음으로 넘어갑니다.";
+              note.classList.add("notice--flag");
+              if (note.scrollIntoView) note.scrollIntoView({ block:"nearest" });
+              return false;
+            }
+            done = true; resolve(picked);
+          } }
+      ]
+    });
+  });
+}
+
+/* 만 14세 미만일 때 보호자 동의 확인 */
+function askGuardian(year){
+  return new Promise(function(resolve){
+    const wrap = document.createElement("div");
+    wrap.innerHTML =
+      '<div class="notice">' +
+        year + '년생은 만 14세 미만입니다. 「개인정보 보호법」 제22조의2에 따라 ' +
+        '<strong>보호자(법정대리인)의 동의</strong>가 있어야 서비스를 이용할 수 있습니다.<br/>' +
+        '보호자가 옆에서 확인했다면 아래 <strong>동의했습니다</strong>를 눌러주세요.' +
+      '</div>';
+    let done = false;
+    openModal({
+      title: "보호자 동의",
+      desc: "자세한 내용은 개인정보 처리방침 3항에 있습니다.",
+      body: wrap,
+      dismissible: false,
+      onClose: function(){ if (!done) resolve(false); },
+      actions: [
+        { label:"아니요", variant:"ghost", onClick: function(){ done = true; resolve(false); } },
+        { label:"동의했습니다", variant:"primary", onClick: function(){ done = true; resolve(true); } }
+      ]
+    });
+  });
+}
+
+async function saveBirthYear(y){
+  try {
+    const { error } = await S.sb.from("sr_profiles")
+      .update({ birth_year: y, updated_at: new Date().toISOString() })
+      .eq("id", S.user.id);
+    if (error) return false;
+  } catch (e) {
+    return false;   // 연결이 끊겼을 때도 화면이 멈추지 않도록
+  }
+  S.profile.birth_year = y;
+  return true;
+}
+
+/* 로그인 뒤 앱으로 들어가기 전에 한 번 거치는 관문입니다.
+   true 를 돌려주면 계속 진행, false 면 로그아웃 중입니다. */
+async function checkAge(){
+  if (!S.profile || !S.user) return true;
+
+  let y = S.profile.birth_year || null;
+  while (!y){
+    const picked = await askBirthYear();
+    if (!picked){ await bailOut(); return false; }
+    if (!(await saveBirthYear(picked))){
+      await alertModal("저장하지 못했습니다", "인터넷 연결을 확인하고 다시 골라주세요.");
+      continue;
+    }
+    y = picked;
+  }
+
+  if (isMinor(y) && !hasConsent(S.user.id)){
+    const ok = await askGuardian(y);
+    if (!ok){
+      await alertModal("보호자 동의가 필요합니다", "보호자와 함께 다시 로그인해 주세요. 기록은 그대로 남아 있습니다.");
+      await bailOut();
+      return false;
+    }
+    setConsent(S.user.id, true);
+  }
+  paintProfile();
+  return true;
+}
+
+async function bailOut(){
+  try { await S.sb.auth.signOut(); } catch (e) {}
+  location.reload();
 }
 
 /* ── 프로필 사진 선택 모달 (자체 팝업) ── */
@@ -2629,6 +2801,10 @@ async function handleSession(session){
 
   await ensureProfile(S.user);
   paintProfile();
+
+  /* 만 14세 미만 확인 — 출생 년도가 없으면 여기서 반드시 묻습니다. */
+  if (!(await checkAge())) return;
+
   await loadSessions();
   renderAll();
 
