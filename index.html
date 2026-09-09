@@ -4,6 +4,20 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5, interactive-widget=resizes-content" />
 <meta name="color-scheme" content="dark light" />
+<!-- 보안: 스크립트·통신 대상을 꼭 필요한 곳으로 제한합니다.
+     (인라인 스크립트/스타일로 만든 한 파일짜리 앱이라 'unsafe-inline' 은 남겨둡니다)
+     프로젝트 주소를 바꾸면 connect-src 도 함께 고쳐야 합니다. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+  style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+  font-src https://cdn.jsdelivr.net data:;
+  img-src 'self' data: blob: https:;
+  connect-src https://*.supabase.co wss://*.supabase.co;
+  base-uri 'none';
+  form-action 'none';
+" />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
 <meta name="description" content="혼자서도 흐트러지지 않게. 타이머로 공부 시간을 재고, 30분을 넘기면 포인트가 쌓이는 공부 전용방." />
 <title>자리 · 공부 전용방</title>
 
@@ -189,6 +203,9 @@ ul,ol{ padding-left:1.15em; }
 .section__head{ display:flex; align-items:baseline; gap:10px; margin-bottom:10px; }
 .section__title{ font-size:.95rem; font-weight:650; letter-spacing:-.01em; }
 .section__note{ font-size:.78rem; color:var(--muted); margin-left:auto; }
+/* 글자만 있는 작은 버튼도 손가락으로 누를 수 있도록 여백으로 영역만 넓힙니다. */
+button.section__note{ padding:7px 6px; margin:-7px -6px -7px auto; border-radius:8px; }
+button.section__note:hover{ color:var(--text); background:var(--surface-2); }
 .dotbtn{
   flex:0 0 auto; align-self:center;
   width:30px; height:30px; margin:-7px -7px -7px 1px;
@@ -416,7 +433,12 @@ button.row:hover{ background:var(--surface-2); }
 
 .stats{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
 .stat{ background:var(--surface); border:1px solid var(--line-soft); border-radius:var(--r-m); padding:14px 12px; text-align:center; min-width:0; }
-.stat__v{ font-size:1.22rem; font-weight:640; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+.stat__v{
+  font-size:clamp(1rem, 4.6vw, 1.22rem);   /* 좁은 화면에서 숫자가 잘리지 않게 */
+  font-weight:640; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+  overflow-wrap:anywhere;                  /* 그래도 길면 잘리지 말고 줄을 바꿉니다 */
+}
 .stat__k{ font-size:.73rem; color:var(--muted); margin-top:3px; }
 
 /* ===================== [C7] 목록 / 표 / 차트 ===================== */
@@ -516,6 +538,13 @@ button.row:hover{ background:var(--surface-2); }
 .table-wrap tbody tr:last-child td{ border-bottom:none; }
 .table-wrap td{ color:var(--text-dim); }
 .table-note{ font-size:.75rem; color:var(--muted); margin-top:6px; }
+/* 좁은 화면에서는 표를 화면 폭에 맞춰 접습니다.
+   칸이 4개인 표만 조금 넓게 두고 가로로 밀어 볼 수 있게 합니다. */
+@media (max-width: 480px){
+  .table-wrap table{ min-width:0; font-size:.78rem; }
+  .table-wrap th,.table-wrap td{ padding:9px 10px; }
+  .table-wrap:has(th:nth-child(4)) table{ min-width:420px; }
+}
 
 .rel__ver{ display:flex; align-items:baseline; gap:9px; }
 .rel__n{ font-size:.92rem; font-weight:650; }
@@ -753,7 +782,7 @@ button.row:hover{ background:var(--surface-2); }
           <div class="rows">
             <button class="row" id="btnBirth">
               <span class="row__label">출생 년도<span class="row__sub">만 14세 미만인지 확인하는 데에만 씁니다</span></span>
-              <span class="row__value" id="birthValue">선택 안 함</span>
+              <span class="row__value" id="birthValue">확인 전</span>
               <svg class="row__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
             </button>
             <div class="row">
@@ -1080,11 +1109,24 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.0.4"
+  VERSION:       "1.0.5"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.0.5",
+    d: "2026-09-10",
+    items: [
+      "59분 40초가 '60분', 1시간 59분 40초가 '1시간 60분' 으로 보이던 문제를 고쳤습니다.",
+      "좁은 화면에서 누적 시간·포인트 숫자가 칸을 넘어 잘리던 문제를 고쳤습니다.",
+      "처리방침의 표가 작은 화면에서 화면 폭에 맞게 접힙니다.",
+      "'전체 보기', '새로고침' 처럼 작은 글자 버튼도 손가락으로 누르기 쉽게 넓혔습니다.",
+      "인터넷이 끊긴 채로 들어와도 빈 화면 대신 안내가 뜹니다.",
+      "프로필 사진은 우리 저장소에서 온 주소만 불러옵니다. 순위표를 볼 때 접속 정보가 다른 서버로 새어 나가지 않습니다.",
+      "창이 떠 있을 때 키보드 이동이 뒤 화면으로 새지 않도록 했습니다."
+    ]
+  },
   {
     v: "1.0.4",
     d: "2026-09-10",
@@ -1174,9 +1216,13 @@ function fmtClock(ms){
 }
 function fmtDur(sec){
   sec = Math.max(0, Math.floor(sec || 0));
-  const h = Math.floor(sec / 3600), m = Math.round(sec % 3600 / 60);
-  if (h > 0) return m > 0 ? (h + "시간 " + m + "분") : (h + "시간");
   if (sec < 60) return sec + "초";
+  /* 분으로 먼저 반올림한 뒤 시간을 계산합니다.
+     시간부터 계산하면 59분 40초가 '60분', 1시간 59분 40초가 '1시간 60분' 으로 나옵니다. */
+  let m = Math.round(sec / 60);
+  const h = Math.floor(m / 60);
+  m = m % 60;
+  if (h > 0) return m > 0 ? (h + "시간 " + m + "분") : (h + "시간");
   return m + "분";
 }
 function fmtWhen(iso){
@@ -1335,10 +1381,22 @@ function openModal(opt){
     if (opt.onClose) opt.onClose();
   }
   function onKey(e){
-    if (e.key === "Escape" && modalStack[modalStack.length - 1] === handle){
+    if (modalStack[modalStack.length - 1] !== handle) return;
+    if (e.key === "Escape"){
       if (opt.dismissible === false) return;   // 반드시 답해야 하는 모달
       e.stopPropagation();
       close();
+      return;
+    }
+    /* 탭 키가 모달 밖으로 새어 나가면, 뒤에 가려진 화면을 키보드로 조작할 수 있습니다. */
+    if (e.key === "Tab"){
+      const list = $$('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])', box)
+        .filter(function(el){ return !el.disabled && el.offsetParent !== null; });
+      if (!list.length) return;
+      const first = list[0], last = list[list.length - 1];
+      const inside = box.contains(document.activeElement);
+      if (e.shiftKey && (!inside || document.activeElement === first)){ e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (!inside || document.activeElement === last)){ e.preventDefault(); first.focus(); }
     }
   }
   const handle = { close: close, box: box, body: body };
@@ -1462,6 +1520,7 @@ function initNav(){
 
   document.addEventListener("touchstart", function(e){
     if (modalStack.length || !S.ready) return;
+    if (!$("#gate").hidden) return;   // 로그인 화면 뒤에서 사이드바가 열리지 않도록
     if (e.touches.length !== 1){ if (NAV.dragging) clearDrag(); NAV.mode = null; return; }
 
     const t = e.touches[0];
@@ -1643,13 +1702,30 @@ function paintProfile(){
 
   $("#minorBox").hidden = !isMinor(p.birth_year);
 }
+/* 프로필 사진 주소는 우리 저장소(Supabase Storage)에서 온 https 주소만 씁니다.
+   순위표에는 남의 프로필도 보이는데, 프로필 칸에 임의의 주소를 넣어두면
+   그 사진을 보는 사람들의 접속 정보가 그 서버로 새어 나갈 수 있습니다. */
+function safeAvatarUrl(url){
+  if (!url) return null;
+  try {
+    const u = new URL(String(url), location.href);
+    if (u.protocol !== "https:") return null;
+    const ok = (u.origin === new URL(CONFIG.SUPABASE_URL).origin) ||
+               /(^|\.)googleusercontent\.com$/.test(u.hostname);
+    return ok ? u.href : null;
+  } catch (e) { return null; }
+}
 function paintAvatar(el, p, name){
   if (!el) return;
   el.innerHTML = "";
-  if (p && p.avatar_url){
+  const src = p ? safeAvatarUrl(p.avatar_url) : null;
+  if (src){
     const img = document.createElement("img");
-    img.src = p.avatar_url;
+    img.src = src;
     img.alt = "";
+    img.referrerPolicy = "no-referrer";
+    img.loading = "lazy";
+    img.decoding = "async";
     img.addEventListener("error", function(){ el.textContent = initialOf(name); });
     el.appendChild(img);
   } else {
@@ -1914,10 +1990,12 @@ function openAvatarModal(){
   hint.style.cssText = "font-size:.78rem;color:var(--muted);text-align:center;line-height:1.55";
   hint.textContent = "JPG·PNG·WEBP, 5MB 이하";
 
+  const OK_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
   input.addEventListener("change", function(){
     const f = input.files && input.files[0];
     if (!f) return;
-    if (!/^image\//.test(f.type)){ hint.textContent = "이미지 파일만 올릴 수 있습니다."; return; }
+    /* SVG 같은 형식은 스크립트를 품을 수 있어서 받지 않습니다. */
+    if (OK_TYPES.indexOf(f.type) < 0){ hint.textContent = "JPG·PNG·WEBP·GIF 만 올릴 수 있습니다."; return; }
     if (f.size > 5 * 1024 * 1024){ hint.textContent = "5MB 이하 파일만 올릴 수 있습니다."; return; }
     file = f;
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -2227,17 +2305,24 @@ async function finishSession(){
   renderAll();
 
   const got = data && data.points_awarded ? data.points_awarded : 0;
-  if (got > 0) toast(fmtDur(sec) + " 기록. <b>+" + got + "P</b> 쌓였습니다.");
-  else toast(fmtDur(sec) + " 기록했습니다. 30분을 넘기면 포인트가 붙습니다.");
+  const savedSec = data && typeof data.duration_seconds === "number" ? data.duration_seconds : sec;
+  if (got > 0) toast(fmtDur(savedSec) + " 기록. <b>+" + got + "P</b> 쌓였습니다.");
+  else toast(fmtDur(savedSec) + " 기록했습니다. 30분을 넘기면 포인트가 붙습니다.");
 }
 
 /* ===================== [11] 기록 / 랭킹 ===================== */
 async function loadSessions(){
-  const { data, error } = await S.sb.from("sr_sessions")
-    .select("id,subject,duration_seconds,points_awarded,ended_at,created_at")
-    .order("created_at", { ascending:false })
-    .limit(200);
-  if (!error) S.sessions = data || [];
+  /* user_id 조건은 서버(RLS)와 별개로 한 번 더 거는 안전장치입니다.
+     정책이 잘못 열려 있어도 남의 기록이 섞이지 않습니다. */
+  let q = S.sb.from("sr_sessions")
+    .select("id,subject,duration_seconds,points_awarded,ended_at,created_at");
+  if (S.user && S.user.id) q = q.eq("user_id", S.user.id);
+  const { data, error } = await q.order("created_at", { ascending:false }).limit(200);
+  if (error){
+    toast("기록을 불러오지 못했습니다. 연결을 확인해 주세요.");
+    return;
+  }
+  S.sessions = data || [];
 }
 
 function sessionRow(s){
@@ -2710,12 +2795,13 @@ async function loadRank(){
     const no = document.createElement("div");
     no.className = "rank__no num" + (i < 3 ? " is-top" : "");
     no.textContent = i + 1;
+    const who = String(p.display_name || "이름 없음").slice(0, 24);
     const av = document.createElement("div");
     av.className = "avatar avatar--sm";
-    paintAvatar(av, p, p.display_name);
+    paintAvatar(av, p, who);
     const label = document.createElement("div");
     label.className = "row__label";
-    label.innerHTML = '<span style="font-weight:550">' + escapeHtml(p.display_name || "이름 없음") + '</span>' +
+    label.innerHTML = '<span style="font-weight:550">' + escapeHtml(who) + '</span>' +
                       '<span class="row__sub">' + escapeHtml(fmtDur(p.total_seconds || 0)) + '</span>';
     const pts = document.createElement("div");
     pts.className = "log__p num";
@@ -2861,13 +2947,28 @@ async function boot(){
     }, 800);
   }
 
-  const { data } = await S.sb.auth.getSession();
-  await handleSession(data ? data.session : null);
+  try {
+    const { data } = await S.sb.auth.getSession();
+    await handleSession(data ? data.session : null);
+  } catch (e) {
+    bootFailed(e);
+  }
 
   S.sb.auth.onAuthStateChange(function(evt, session){
-    if (evt === "SIGNED_IN" && (!S.user || (session && session.user.id !== S.user.id))) handleSession(session);
+    if (evt === "SIGNED_IN" && (!S.user || (session && session.user.id !== S.user.id))){
+      handleSession(session).catch(bootFailed);
+    }
     if (evt === "SIGNED_OUT") location.reload();
   });
+}
+
+/* 통신이 끊긴 채로 들어오면 빈 화면만 남던 문제를 막습니다. */
+async function bootFailed(err){
+  S.ready = true;
+  stopTick();
+  await alertModal("연결하지 못했습니다",
+    "인터넷 연결을 확인한 뒤 다시 시도해 주세요. " + ((err && err.message) ? "(" + String(err.message).slice(0, 120) + ")" : ""));
+  location.reload();
 }
 
 async function handleSession(session){

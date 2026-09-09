@@ -1,0 +1,9 @@
+# Cloudflare Pages 보안 헤더 (이 저장소에서 배포할 때만 적용됩니다)
+# meta 태그로는 넣을 수 없는 항목들입니다.
+/*
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
