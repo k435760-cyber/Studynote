@@ -49,8 +49,13 @@
       RPC  sr_finish_session(p_duration_seconds int,
                              p_started_at timestamptz,
                              p_subject text) -> json
-           └ 서버에서 1800초(30분) 이상일 때만 +3P 를 지급합니다.
+           └ 서버에서 1800초(30분) 이상일 때만 +3P 를 지급하고,
+             57600초(16시간)까지만 저장합니다.
              포인트 규칙을 바꾸려면 클라이언트가 아니라 이 함수를 고치세요.
+      RPC  sr_leaderboard(p_limit int) -> table
+           └ 순위표 전용. 이름·사진·점수·시간만 돌려줍니다.
+             sr_profiles 행 조회는 본인 것만 열려 있으므로(RLS),
+             남의 이메일·출생연도는 어떤 방법으로도 읽히지 않습니다.
       Storage 버킷: sr-avatars (public, 경로 규칙 = {uid}/파일명)
 
   · 새 화면을 추가하려면
@@ -1124,7 +1129,8 @@ const CHANGELOG = [
       "'전체 보기', '새로고침' 처럼 작은 글자 버튼도 손가락으로 누르기 쉽게 넓혔습니다.",
       "인터넷이 끊긴 채로 들어와도 빈 화면 대신 안내가 뜹니다.",
       "프로필 사진은 우리 저장소에서 온 주소만 불러옵니다. 순위표를 볼 때 접속 정보가 다른 서버로 새어 나가지 않습니다.",
-      "창이 떠 있을 때 키보드 이동이 뒤 화면으로 새지 않도록 했습니다."
+      "창이 떠 있을 때 키보드 이동이 뒤 화면으로 새지 않도록 했습니다.",
+      "순위표를 볼 때 다른 사람의 이메일과 출생 년도가 넘어오지 않도록 서버 쪽을 고쳤습니다. 이제 이름·사진·점수·시간만 오갑니다."
     ]
   },
   {
@@ -2774,11 +2780,11 @@ function openChartModal(){
 async function loadRank(){
   const box = $("#rankList");
   box.innerHTML = '<div class="empty">불러오는 중…</div>';
-  const { data, error } = await S.sb.from("sr_profiles")
-    .select("id,display_name,avatar_url,points,total_seconds")
-    .order("points", { ascending:false })
-    .order("total_seconds", { ascending:false })
-    .limit(50);
+  /* 순위표는 sr_leaderboard 함수로만 봅니다.
+     이 함수는 이름·사진·점수·시간만 돌려줍니다. 예전처럼 sr_profiles 를 직접
+     읽으면 남의 이메일·출생연도까지 넘어오기 때문에 정책을 '내 것만' 으로
+     바꾸고 이 함수를 따로 두었습니다. */
+  const { data, error } = await S.sb.rpc("sr_leaderboard", { p_limit: 50 });
 
   if (error){
     box.innerHTML = '<div class="empty">순위를 불러오지 못했습니다.</div>';
