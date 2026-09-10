@@ -660,6 +660,69 @@ html[data-theme="dark"] .day__t--4{ color:#241A08; }
 .exam__empty{ font-size:.86rem; color:var(--muted); line-height:1.65; word-break:keep-all; }
 .tag--beta{ color:var(--accent); }
 
+/* ── 이번 주 리포트 (베타) ── */
+.rep__hero{ display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; }
+.rep__big{ font-size:1.6rem; font-weight:700; letter-spacing:-.035em; }
+.rep__delta{
+  display:inline-flex; align-items:center; gap:4px;
+  padding:2px 8px; border-radius:99px;
+  font-size:.75rem; font-weight:650;
+  background:var(--surface-2); color:var(--muted);
+}
+.rep__delta svg{ width:11px; height:11px; }
+.rep__delta.is-up{ color:var(--ok); }
+.rep__delta.is-down{ color:var(--danger); }
+.rep__sub{ margin-top:6px; font-size:.75rem; color:var(--muted); }
+.rep__tiles{ display:grid; grid-template-columns:repeat(3, 1fr); gap:7px; margin-top:15px; }
+.tile{ padding:10px 9px 11px; border-radius:11px; background:var(--surface-2); min-width:0; }
+.tile__k{ display:block; font-size:.67rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tile__v{ display:block; margin-top:4px; font-size:.9rem; font-weight:650; letter-spacing:-.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tile__s{ display:block; margin-top:2px; font-size:.67rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tile .gauge{ margin:8px 0 1px; height:4px; }
+/* 좁은 화면에서는 셋을 한 줄에 밀어 넣지 않고 두 줄로 풉니다(글자가 잘리지 않게). */
+@media (max-width: 365px){
+  .rep__tiles{ grid-template-columns:repeat(2, 1fr); }
+  .rep__tiles .tile:last-child{ grid-column:1 / -1; }
+}
+.rep__open{
+  margin-top:14px; width:100%;
+  display:flex; align-items:center; justify-content:center; gap:5px;
+  padding:11px; border-radius:11px; background:var(--surface-2);
+  font-size:.82rem; font-weight:600; color:var(--text-dim);
+  transition:background .16s ease;
+}
+.rep__open:hover{ background:var(--line-soft); }
+.rep__open svg{ width:14px; height:14px; transition:transform .2s var(--ease); }
+.rep__open[aria-expanded="true"] svg{ transform:rotate(180deg); }
+.rep__more{ margin-top:16px; border-top:1px solid var(--line-soft); padding-top:15px; }
+.rep__blk + .rep__blk{ margin-top:18px; }
+.rep__h{ font-size:.78rem; font-weight:650; color:var(--text-dim); margin:0 0 10px; }
+
+/* 지난주 vs 이번주 — 같은 축 하나에 두 계열 */
+.cmp{ display:flex; align-items:flex-end; gap:6px; padding:0 2px; }
+.cmp__col{ flex:1 1 0; min-width:0; display:flex; flex-direction:column; align-items:center; gap:6px; }
+.cmp__track{ display:flex; align-items:flex-end; justify-content:center; gap:2px; width:100%; height:72px; }
+.cmp__b{ display:block; width:100%; max-width:11px; min-height:3px; border-radius:4px 4px 2px 2px; }
+.cmp__b--prev{ background:var(--line); background:color-mix(in srgb, var(--muted) 40%, transparent); }
+.cmp__b--now{ background:var(--accent); }
+.cmp__d{ font-size:.68rem; color:var(--muted); }
+.cmp__d.is-today{ color:var(--accent); font-weight:650; }
+.cmp__leg{ display:flex; justify-content:center; flex-wrap:wrap; gap:14px; margin-top:11px; font-size:.72rem; color:var(--muted); }
+.cmp__leg span{ display:inline-flex; align-items:center; gap:5px; }
+.cmp__leg i{ width:9px; height:9px; border-radius:3px; flex:0 0 auto; }
+.cmp__leg i.now{ background:var(--accent); }
+.cmp__leg i.prev{ background:var(--line); background:color-mix(in srgb, var(--muted) 40%, transparent); }
+
+/* 이름 = 값 한 줄 */
+.kv{ display:flex; align-items:baseline; gap:10px; padding:8px 0; border-bottom:1px solid var(--line-soft); font-size:.83rem; }
+.kv:last-child{ border-bottom:none; }
+.kv__k{ flex:0 1 auto; min-width:0; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.kv__v{ margin-left:auto; flex:0 0 auto; font-weight:600; }
+.kv__v .up{ color:var(--ok); }
+.kv__v .down{ color:var(--danger); }
+.kv__v .same{ color:var(--muted); font-weight:500; }
+.kv__v em{ font-style:normal; color:var(--muted); font-weight:500; }
+
 /* ── 베타 환영 화면 ── */
 .beta{
   position:fixed; top:0; right:0; bottom:0; left:0;
@@ -1089,6 +1152,14 @@ button.srow:hover .srow__n{ color:var(--text); }
 
       <!-- ─────────── 기록 ─────────── -->
       <section class="view" data-view="log" hidden>
+        <div class="section" data-extra data-beta id="reportBox" hidden>
+          <div class="section__head">
+            <h2 class="section__title">이번 주 리포트<span class="tag tag--beta">베타</span></h2>
+            <span class="section__note" id="repRange">—</span>
+          </div>
+          <div class="card rep" id="repCard"></div>
+        </div>
+
         <div class="section">
           <div class="section__head">
             <h2 class="section__title">최근 7일</h2>
@@ -1503,9 +1574,9 @@ button.srow:hover .srow__n{ color:var(--text); }
         </tr>
         <tr>
           <td>선택</td>
-          <td>하루 목표 시간, 시험 이름·날짜·목표 공부시간, 베타 참여 여부</td>
+          <td>하루 목표 시간 등 이용자가 직접 정한 설정값</td>
           <td>이용자가 설정 화면에서 직접 입력</td>
-          <td>목표 달성률 표시, 시험까지 남은 날 계산, 베타 기능 제공</td>
+          <td>목표 달성률 표시, 이용자가 고른 화면 구성 유지</td>
           <td>삭제 요청 시 또는 회원 탈퇴 시까지</td>
         </tr>
         <tr>
@@ -1663,10 +1734,8 @@ const CHANGELOG = [
     v: "1.3.2",
     d: "2026-09-10",
     items: [
-      "베타 제도가 생겼습니다. 설정 › 업데이트 내역 › 최신 버전 확인에서 지금 열려 있는 베타를 보고 가입할 수 있습니다.",
-      "베타에 가입하면 앱을 껐다 다시 열었을 때부터 베타 기능이 켜지고, 처음 한 번 환영 화면이 나옵니다.",
-      "베타에 가입한 사람은 업데이트 내역을 정식·베타 두 가지로 나눠 볼 수 있습니다.",
-      "베타는 언제든 나갈 수 있고, 나가도 정해둔 내용은 지워지지 않습니다."
+      "설정 › 업데이트 내역에서 ‘최신 버전 확인’ 으로 지금 쓰는 버전을 볼 수 있습니다.",
+      "개인정보 처리방침의 수집 항목 표에, 이용자가 직접 정하는 설정값(하루 목표 시간 등)을 적었습니다."
     ]
   },
   {
@@ -1874,7 +1943,7 @@ const VIEW_TITLE = {
 };
 
 /* 그래프 보기 방식은 CHARTS 안의 ls 키에 그래프별로 저장합니다. */
-const LS = { theme:"jari.theme", timer:"jari.timer", view:"jari.view", goal:"jari.goal", simple:"jari.simple", tree:"jari.tree", logKind:"jari.logkind" };
+const LS = { theme:"jari.theme", timer:"jari.timer", view:"jari.view", goal:"jari.goal", simple:"jari.simple", tree:"jari.tree", logKind:"jari.logkind", report:"jari.report" };
 
 /* ===================== [2] 상태 ===================== */
 const S = {
@@ -1890,6 +1959,7 @@ const S = {
   beta: false,           // 베타 기능 켜짐 (가입 뒤 다시 들어왔을 때부터)
   exam: null,            // 시험 관리 설정 (베타)
   logKind: "main",       // 업데이트 내역 — main | beta
+  repOpen: false,        // 이번 주 리포트 '자세히 보기' 를 펼쳐 뒀는가
   ready: false,
   timer: { running:false, startedAt:null, accumulated:0, seenAt:0 }, // ms 기준
   tickId: null,
@@ -3312,6 +3382,7 @@ function renderLog(){
   } else {
     S.sessions.forEach(function(s){ box.appendChild(sessionRow(s)); });
   }
+  renderReport();
   renderCharts();
   renderCalendar();
 }
@@ -4095,7 +4166,10 @@ const ICONS = {
   trophy:'<path d="M7 21h10M12 17v4"/><path d="M6 4h12v5a6 6 0 0 1-12 0z"/><path d="M18 5h2.5a2.5 2.5 0 0 1 0 5H18M6 5H3.5a2.5 2.5 0 0 0 0 5H6"/>',
   tree:  '<path d="M12 21v-6"/><path d="M12 15c-3.6 0-6-2.2-6-5.2C6 6.4 8.7 3 12 3s6 3.4 6 6.8c0 3-2.4 5.2-6 5.2z"/>',
   cal:   '<rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
-  target:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>'
+  target:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>',
+  up:   '<path d="M12 19.5V5M6 11l6-6 6 6"/>',
+  down: '<path d="M12 4.5V19M6 13l6 6 6-6"/>',
+  same: '<path d="M5.5 12h13"/>'
 };
 function iconSvg(name, cls){
   return '<svg' + (cls ? ' class="' + cls + '"' : '') + ' viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
@@ -4541,6 +4615,253 @@ function openPrivacyModal(){
   openModal({ title:"개인정보 처리방침", body:wrap, actions:[{ label:"확인", variant:"primary" }] });
 }
 
+/* ── 이번 주 리포트 (베타) ─────────────────────────────
+   한 장에서 이번 주가 어땠는지 바로 보이게 하는 것이 목적입니다.
+   접었을 때는 큰 숫자 하나 + 작은 칸 셋만, 펼치면 자세한 내용이 나옵니다.
+   '이번 주' 는 월요일부터 오늘까지입니다. 지난주와 견줄 때는 지난주의
+   같은 요일까지만 더합니다(수요일이면 월~수). 그래야 주 초반에
+   억울하게 줄어 보이지 않습니다. */
+
+function mondayOf(d){
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));   // 월요일 = 0
+  return x;
+}
+function daySpan(from, n){
+  const out = [];
+  for (let i = 0; i < n; i++){
+    out.push(dayKey(new Date(from.getFullYear(), from.getMonth(), from.getDate() + i)));
+  }
+  return out;
+}
+function subjOf(s){
+  const raw = s.subject == null ? "" : String(s.subject).trim();
+  return raw ? raw.slice(0, 24) : "공부";
+}
+
+function reportStats(){
+  const now = new Date();
+  const mon  = mondayOf(now);
+  const pmon = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() - 7);
+  const gone = ((now.getDay() + 6) % 7) + 1;          // 이번 주에 지난 날 수(오늘 포함)
+
+  const thisKeys = daySpan(mon, 7);
+  const prevKeys = daySpan(pmon, 7);
+  const nowKeys  = thisKeys.slice(0, gone);
+  const cmpKeys  = prevKeys.slice(0, gone);
+
+  const totals = dayTotals();
+  const sum = function(ks){
+    let t = 0;
+    ks.forEach(function(k){ t += (totals[k] || 0); });
+    return t;
+  };
+
+  const total    = sum(nowKeys);
+  const prevSame = sum(cmpKeys);
+  const prevAll  = sum(prevKeys);
+
+  /* 세션 수 · 과목 */
+  let count = 0;
+  const subNow = {}, subPrev = {};
+  S.sessions.forEach(function(s){
+    const k = dayKey(s.ended_at || s.created_at);
+    const nm = subjOf(s), sec = s.duration_seconds || 0;
+    if (nowKeys.indexOf(k) >= 0){ count++; subNow[nm] = (subNow[nm] || 0) + sec; }
+    else if (cmpKeys.indexOf(k) >= 0){ subPrev[nm] = (subPrev[nm] || 0) + sec; }
+  });
+
+  const names = Object.keys(subNow);
+  Object.keys(subPrev).forEach(function(n){ if (names.indexOf(n) < 0) names.push(n); });
+  const subs = names.map(function(n){
+    return { name:n, sec:(subNow[n] || 0), was:(subPrev[n] || 0), diff:(subNow[n] || 0) - (subPrev[n] || 0) };
+  }).sort(function(a, b){ return b.sec - a.sec || b.was - a.was; });
+  const top = subs.length && subs[0].sec > 0 ? subs[0] : null;
+
+  /* 가장 오래 앉은 요일 */
+  let best = null;
+  nowKeys.forEach(function(k, i){
+    const sec = totals[k] || 0;
+    if (sec > 0 && (!best || sec > best.sec)) best = { key:k, sec:sec, i:i };
+  });
+
+  /* 목표 — 하루 목표 × 7 을 이번 주 목표로 봅니다 */
+  const goalWeek = S.goal > 0 ? S.goal * 7 : 0;
+  const pct  = goalWeek > 0 ? Math.round((total / goalWeek) * 100) : null;
+  let hit = 0;
+  nowKeys.forEach(function(k){ if (S.goal > 0 && (totals[k] || 0) >= S.goal) hit++; });
+
+  const days = thisKeys.map(function(k, i){
+    return {
+      key: k, label: "월화수목금토일"[i],
+      now: (i < gone) ? (totals[k] || 0) : null,      // 아직 오지 않은 날은 비웁니다
+      prev: totals[prevKeys[i]] || 0,
+      today: i === gone - 1
+    };
+  });
+
+  return {
+    from: thisKeys[0], to: nowKeys[nowKeys.length - 1], gone: gone,
+    total: total, prevSame: prevSame, prevAll: prevAll, diff: total - prevSame,
+    count: count, avg: count ? Math.round(total / count) : 0,
+    subs: subs, top: top, best: best,
+    streak: streakInfo().days,
+    goalWeek: goalWeek, pct: pct, hit: hit,
+    days: days
+  };
+}
+
+function repLine(st){
+  if (st.total <= 0){
+    return "이번 주에는 아직 기록이 없습니다. 30분만 앉아도 이 칸이 채워지기 시작합니다.";
+  }
+  const out = ["이번 주에 " + fmtDur(st.total) + " 앉았습니다."];
+  if (st.prevSame > 0){
+    out.push(st.diff >= 0
+      ? "지난주 같은 때보다 " + fmtDur(st.diff) + " 많습니다."
+      : "지난주 같은 때보다 " + fmtDur(-st.diff) + " 적습니다.");
+  } else {
+    out.push("지난주 같은 때는 기록이 없었습니다.");
+  }
+  if (st.top) out.push(st.top.name + "에 가장 오래 머물렀습니다.");
+  if (st.goalWeek > 0){
+    out.push(st.total >= st.goalWeek
+      ? "이번 주 목표는 이미 채웠습니다."
+      : "목표까지 " + fmtDur(st.goalWeek - st.total) + " 남았습니다.");
+  }
+  return out.join(" ");
+}
+
+function deltaChip(diff){
+  if (!diff) return '<span class="rep__delta">' + iconSvg("same") + '변화 없음</span>';
+  const up = diff > 0;
+  return '<span class="rep__delta ' + (up ? "is-up" : "is-down") + '">' +
+         iconSvg(up ? "up" : "down") + (up ? "+" : "−") + escapeHtml(fmtDur(Math.abs(diff))) + '</span>';
+}
+function diffText(diff){
+  if (!diff) return '<span class="same">그대로</span>';
+  return diff > 0
+    ? '<span class="up">▲ ' + escapeHtml(fmtDur(diff)) + '</span>'
+    : '<span class="down">▼ ' + escapeHtml(fmtDur(-diff)) + '</span>';
+}
+
+function cmpChart(st){
+  let max = 1;
+  st.days.forEach(function(d){ max = Math.max(max, d.now || 0, d.prev); });
+  const H = 72;
+
+  let cols = "";
+  st.days.forEach(function(d){
+    const hp = Math.max(3, Math.round((d.prev / max) * H));
+    const hn = d.now === null ? 0 : Math.max(3, Math.round((d.now / max) * H));
+    cols +=
+      '<div class="cmp__col">' +
+        '<div class="cmp__track">' +
+          '<span class="cmp__b cmp__b--prev" style="height:' + hp + 'px" title="지난주 ' + escapeHtml(d.label) + ' · ' + escapeHtml(fmtDur(d.prev)) + '"></span>' +
+          (d.now === null
+            ? '<span class="cmp__b" style="height:3px;background:transparent"></span>'
+            : '<span class="cmp__b cmp__b--now" style="height:' + hn + 'px" title="이번 주 ' + escapeHtml(d.label) + ' · ' + escapeHtml(fmtDur(d.now)) + '"></span>') +
+        '</div>' +
+        '<span class="cmp__d' + (d.today ? " is-today" : "") + '">' + escapeHtml(d.label) + '</span>' +
+      '</div>';
+  });
+
+  return '<div class="cmp">' + cols + '</div>' +
+    '<div class="cmp__leg">' +
+      '<span><i class="now"></i>이번 주 ' + escapeHtml(fmtDur(st.total)) + '</span>' +
+      '<span><i class="prev"></i>지난주 ' + escapeHtml(fmtDur(st.prevAll)) + '</span>' +
+    '</div>';
+}
+
+function renderReport(){
+  const box = $("#reportBox");
+  if (!box) return;
+  const card = $("#repCard");
+  const st = reportStats();
+
+  const rng = $("#repRange");
+  if (rng) rng.textContent = fmtDayKey(st.from).replace(/\s\(.\)$/, "") + " ~ 오늘";
+
+  /* 접었을 때 — 큰 숫자 하나와 작은 칸 셋 */
+  const tiles =
+    '<div class="tile">' +
+      '<span class="tile__k">많이 한 과목</span>' +
+      '<span class="tile__v">' + escapeHtml(st.top ? st.top.name : "—") + '</span>' +
+      '<span class="tile__s">' + escapeHtml(st.top ? fmtDur(st.top.sec) : "아직 없습니다") + '</span>' +
+    '</div>' +
+    '<div class="tile">' +
+      '<span class="tile__k">한 번 앉으면</span>' +
+      '<span class="tile__v num">' + escapeHtml(st.count ? fmtDur(st.avg) : "—") + '</span>' +
+      '<span class="tile__s num">' + (st.count ? st.count + "번 기록" : "기록 없음") + '</span>' +
+    '</div>' +
+    '<div class="tile">' +
+      '<span class="tile__k">목표 달성률</span>' +
+      '<span class="tile__v num">' + (st.pct === null ? "—" : Math.min(999, st.pct) + "%") + '</span>' +
+      (st.pct === null
+        ? '<span class="tile__s">목표 없음</span>'
+        : '<div class="gauge"><div class="gauge__fill" style="width:' + Math.max(0, Math.min(100, st.pct)) + '%' +
+          (st.pct >= 100 ? ';background:var(--ok)' : '') + '"></div></div>') +
+    '</div>';
+
+  card.innerHTML =
+    '<div class="rep__hero">' +
+      '<span class="rep__big num">' + escapeHtml(fmtDur(st.total)) + '</span>' +
+      deltaChip(st.diff) +
+    '</div>' +
+    '<div class="rep__sub">총 공부시간 · 지난주 같은 때와 견준 값입니다</div>' +
+    '<div class="rep__tiles">' + tiles + '</div>' +
+    '<button type="button" class="rep__open" id="repOpen" aria-expanded="false" aria-controls="repMore">' +
+      '<span>자세히 보기</span>' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
+    '</button>' +
+    '<div class="rep__more" id="repMore" hidden></div>';
+
+  /* 펼쳤을 때 */
+  const subRows = st.subs.slice(0, 5).map(function(x){
+    return '<div class="kv"><span class="kv__k">' + escapeHtml(x.name) + '</span>' +
+           '<span class="kv__v num">' + escapeHtml(fmtDur(x.sec)) + ' <em>·</em> ' + diffText(x.diff) + '</span></div>';
+  }).join("") || '<div class="kv"><span class="kv__k">아직 과목 기록이 없습니다</span></div>';
+
+  $("#repMore").innerHTML =
+    '<div class="rep__blk">' +
+      '<h3 class="rep__h">지난주 vs 이번 주</h3>' + cmpChart(st) +
+    '</div>' +
+    '<div class="rep__blk">' +
+      '<h3 class="rep__h">과목별 증감</h3>' + subRows +
+    '</div>' +
+    '<div class="rep__blk">' +
+      '<h3 class="rep__h">이번 주 살펴보기</h3>' +
+      '<div class="kv"><span class="kv__k">가장 집중 잘 된 요일</span><span class="kv__v">' +
+        (st.best ? escapeHtml("월화수목금토일"[st.best.i] + "요일") + ' <em>' + escapeHtml(fmtDur(st.best.sec)) + '</em>' : '<span class="same">아직 없습니다</span>') +
+      '</span></div>' +
+      '<div class="kv"><span class="kv__k">연속 공부일</span><span class="kv__v num">' +
+        (st.streak > 0 ? st.streak + "일째" : '<span class="same">끊겼습니다</span>') +
+      '</span></div>' +
+      '<div class="kv"><span class="kv__k">목표 달성률</span><span class="kv__v num">' +
+        (st.pct === null
+          ? '<span class="same">목표를 정하지 않았습니다</span>'
+          : Math.min(999, st.pct) + '% <em>' + escapeHtml(fmtDur(st.total)) + ' / ' + escapeHtml(fmtDur(st.goalWeek)) + '</em>') +
+      '</span></div>' +
+      '<div class="kv"><span class="kv__k">하루 목표를 채운 날</span><span class="kv__v num">' +
+        (S.goal > 0 ? st.hit + '일 <em>' + st.gone + '일 중</em>' : '<span class="same">목표 없음</span>') +
+      '</span></div>' +
+    '</div>' +
+    '<div class="notice rep__one">' + escapeHtml(repLine(st)) + '</div>';
+
+  const btn = $("#repOpen"), more = $("#repMore");
+  function paint(open){
+    more.hidden = !open;
+    btn.setAttribute("aria-expanded", String(open));
+    btn.firstChild.textContent = open ? "접기" : "자세히 보기";
+  }
+  paint(S.repOpen);
+  btn.addEventListener("click", function(){
+    S.repOpen = !S.repOpen;
+    try { localStorage.setItem(LS.report, S.repOpen ? "1" : "0"); } catch (e) {}
+    paint(S.repOpen);
+  });
+}
+
 /* ===================== [12-b] 베타 · 시험 관리 =====================
    베타에 가입한 사람에게만 미리 열어두는 기능입니다.
    - 가입 여부는 계정(sr_profiles.beta)에 저장하므로 기기가 바뀌어도 따라옵니다.
@@ -4566,6 +4887,16 @@ const BETA = {
 /* 베타에서만 쓰는 변경 내역입니다. 정식 내역(CHANGELOG)과 따로 둡니다. */
 const BETA_CHANGELOG = [
   {
+    v: "beta 1 핫픽스",
+    d: "2026-09-10",
+    items: [
+      "기록 탭 맨 위에 ‘이번 주 리포트’ 가 생겼습니다. 총 공부시간과 지난주 대비 증감, 많이 한 과목, 한 번 앉는 평균, 목표 달성률을 한 장에서 봅니다.",
+      "‘자세히 보기’ 를 누르면 지난주 vs 이번 주 막대, 과목별 증감, 가장 집중 잘 된 요일, 연속 공부일, 목표 달성률, 한 줄 요약이 펼쳐집니다.",
+      "‘이번 주’ 는 월요일부터 오늘까지입니다. 지난주와 견줄 때는 지난주의 같은 요일까지만 더해, 주 초반에 억울하게 줄어 보이지 않습니다.",
+      "펼쳐 둔 상태는 이 기기에 저장됩니다."
+    ]
+  },
+  {
     v: "beta 1",
     d: "2026-09-10",
     items: [
@@ -4588,6 +4919,7 @@ function loadBeta(){
   try {
     const k = localStorage.getItem(LS.logKind);
     if (k === "beta" || k === "main") S.logKind = k;
+    S.repOpen = localStorage.getItem(LS.report) === "1";
   } catch (e) {}
 }
 function applyBeta(){
@@ -4596,6 +4928,7 @@ function applyBeta(){
   if (seg) seg.hidden = !S.beta;
   if (!S.beta && S.logKind === "beta") S.logKind = "main";
   renderExam();
+  renderReport();
   renderChangelog();
 }
 
