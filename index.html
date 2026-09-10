@@ -337,6 +337,7 @@ button.row{ transition:background .16s ease; }
 button.row:hover{ background:var(--surface-2); }
 .row__label{ flex:1 1 auto; min-width:0; font-size:.92rem; }
 .row__sub{ display:block; font-size:.76rem; color:var(--muted); margin-top:2px; line-height:1.45; }
+.uid{ word-break:break-all; letter-spacing:-.01em; }
 .row__value{ flex:0 0 auto; font-size:.86rem; color:var(--muted); max-width:52%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .row__chev{ flex:0 0 auto; width:16px; height:16px; color:var(--muted); }
 
@@ -1147,6 +1148,11 @@ button.srow:hover .srow__n{ color:var(--text); }
               <span class="row__label">이메일</span>
               <span class="row__value" id="mailValue">—</span>
             </div>
+            <button class="row" id="btnUid">
+              <span class="row__label">사용자 번호<span class="row__sub uid num" id="uidValue">—</span></span>
+              <span class="row__value">복사</span>
+              <svg class="row__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg>
+            </button>
           </div>
         </div>
 
@@ -1488,11 +1494,18 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.2.4"
+  VERSION:       "1.2.5"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.2.5",
+    d: "2026-09-10",
+    items: [
+      "프로필에서 사용자 번호를 볼 수 있습니다. 줄을 누르면 복사됩니다. 문의할 때 이 번호를 알려주시면 계정을 바로 찾을 수 있습니다."
+    ]
+  },
   {
     v: "1.2.4",
     d: "2026-09-10",
@@ -2217,6 +2230,8 @@ function paintProfile(){
   $("#drawerMail").textContent = mail;
   $("#mailValue").textContent = mail;
   $("#mailValue2").textContent = mail;
+  const uid = $("#uidValue");
+  if (uid) uid.textContent = (S.user && S.user.id) ? S.user.id : "—";
   $("#inpName").value = p.display_name || "";
   $("#birthValue").textContent = p.birth_year ? (p.birth_year + "년") : "확인 전";
   $("#navPoint").textContent = (p.points || 0) + "P";
@@ -2486,6 +2501,37 @@ async function checkAge(){
 async function bailOut(){
   try { await S.sb.auth.signOut(); } catch (e) {}
   location.reload();
+}
+
+/* 사용자 번호(계정 UUID) 복사.
+   navigator.clipboard 는 앱 안의 브라우저에서 막혀 있는 경우가 있어
+   예전 방식(execCommand)까지 준비해 둡니다. */
+async function copyText(text){
+  try {
+    if (navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (e) {}
+  try {
+    const t = document.createElement("textarea");
+    t.value = text;
+    t.setAttribute("readonly", "");
+    t.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+    document.body.appendChild(t);
+    t.select();
+    t.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    t.remove();
+    return ok;
+  } catch (e) { return false; }
+}
+async function copyUid(){
+  const id = S.user && S.user.id;
+  if (!id) return;
+  const ok = await copyText(id);
+  if (ok) toast("사용자 번호를 복사했습니다.");
+  else await alertModal("사용자 번호", id + "\n\n복사가 막혀 있어서 그대로 보여드립니다. 길게 눌러 복사해 주세요.");
 }
 
 /* ── 프로필 사진 선택 모달 (자체 팝업) ── */
@@ -4356,6 +4402,7 @@ function bindUI(){
   $("#btnAvatar").addEventListener("click", openAvatarModal);
   $("#btnAvatar2").addEventListener("click", openAvatarModal);
   $("#btnBirth").addEventListener("click", openYearModal);
+  $("#btnUid").addEventListener("click", copyUid);
   $("#btnSaveProfile").addEventListener("click", saveProfile);
 
   $("#btnRankRefresh").addEventListener("click", loadRank);
