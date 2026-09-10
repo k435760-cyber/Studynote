@@ -639,6 +639,61 @@ html[data-theme="dark"] .day__t--4{ color:#241A08; }
 .goal.is-off .goal__top,
 .goal.is-off .gauge{ display:none; }
 
+/* ── 시험 관리 (베타) ── */
+.exam__top{ display:flex; align-items:baseline; gap:9px; }
+.exam__dday{
+  font-size:1.5rem; font-weight:700; letter-spacing:-.035em;
+  color:var(--accent); flex:0 0 auto;
+}
+.exam__name{
+  font-size:.93rem; font-weight:600; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.exam__date{ margin-left:auto; flex:0 0 auto; font-size:.79rem; color:var(--muted); }
+.exam__line{ margin-top:13px; display:flex; align-items:baseline; gap:7px; font-size:.82rem; color:var(--muted); word-break:keep-all; }
+.exam__pct{ margin-left:auto; flex:0 0 auto; font-size:.88rem; font-weight:640; color:var(--accent); }
+.exam .gauge{ margin:9px 0; }
+.exam.is-done .exam__pct{ color:var(--ok); }
+.exam.is-done .gauge__fill{ background:var(--ok); }
+.exam.is-past .exam__dday{ color:var(--muted); }
+.exam.is-soon .exam__dday{ color:var(--danger); }
+.exam__empty{ font-size:.86rem; color:var(--muted); line-height:1.65; word-break:keep-all; }
+.tag--beta{ color:var(--accent); }
+
+/* ── 베타 환영 화면 ── */
+.beta{
+  position:fixed; top:0; right:0; bottom:0; left:0;
+  height:var(--app-h, auto);
+  z-index:80;
+  display:flex; flex-direction:column; justify-content:center;
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:32px 24px;
+  padding:32px 24px calc(env(safe-area-inset-bottom) + 32px);
+  background:var(--bg);
+}
+.beta[hidden]{ display:none; }
+.beta__in{ width:100%; max-width:340px; margin:auto; text-align:center; }
+.beta__mark{ display:block; width:100%; max-width:230px; margin:0 auto 24px; overflow:visible; }
+.beta__mark path{
+  fill:none; stroke:var(--accent);
+  stroke-width:7; stroke-linecap:round; stroke-linejoin:round;
+}
+.beta__hi{ font-size:1.32rem; font-weight:700; letter-spacing:-.03em; }
+.beta__lead{ margin-top:11px; font-size:.87rem; color:var(--text-dim); line-height:1.7; word-break:keep-all; }
+.beta__act{ margin-top:28px; }
+.beta__hi, .beta__lead, .beta__act{
+  opacity:0; transform:translateY(9px);
+  transition:opacity .55s ease, transform .55s var(--ease);
+}
+.beta__lead{ transition-delay:.1s; }
+.beta__act{ transition-delay:.2s; }
+.beta.is-on .beta__hi,
+.beta.is-on .beta__lead,
+.beta.is-on .beta__act{ opacity:1; transform:none; }
+@media (prefers-reduced-motion: reduce){
+  .beta__hi, .beta__lead, .beta__act{ transition:none; opacity:1; transform:none; }
+}
+
 .deck__form{ margin-top:18px; }
 .deck__actions{ display:flex; gap:10px; margin-top:12px; }
 .deck__actions > .btn{ flex:1 1 0; }
@@ -1003,6 +1058,14 @@ button.srow:hover .srow__n{ color:var(--text); }
           <div class="rows" id="recentList"><div class="empty">첫 기록을 남겨보세요.</div></div>
         </div>
 
+        <div class="section" data-extra data-beta id="examBox" hidden>
+          <div class="section__head">
+            <h2 class="section__title">시험 관리<span class="tag tag--beta">베타</span></h2>
+            <button class="section__note" id="btnExam">시험 정하기</button>
+          </div>
+          <div class="card exam" id="examCard"></div>
+        </div>
+
         <div class="section" data-extra>
           <div class="section__head">
             <h2 class="section__title">오늘의 목표</h2>
@@ -1252,7 +1315,11 @@ button.srow:hover .srow__n{ color:var(--text); }
         <div class="section">
           <div class="section__head">
             <h2 class="section__title">업데이트 내역</h2>
-            <span class="section__note" id="verNow">—</span>
+            <button class="section__note" id="btnVer">최신 버전 확인</button>
+          </div>
+          <div class="seg" id="logSeg" role="group" aria-label="업데이트 내역 종류" hidden style="margin-bottom:11px">
+            <button class="seg__opt" data-log="main" aria-pressed="true">정식</button>
+            <button class="seg__opt" data-log="beta" aria-pressed="false">베타</button>
           </div>
           <div class="rows" id="changelog"></div>
         </div>
@@ -1377,6 +1444,24 @@ button.srow:hover .srow__n{ color:var(--text); }
   </div>
 </div>
 
+<!-- ============================ 베타 환영 ============================ -->
+<div class="beta" id="betaWelcome" hidden>
+  <div class="beta__in">
+    <svg class="beta__mark" id="betaMark" viewBox="0 0 250 118" role="img" aria-label="beta">
+      <path d="M40 14 C 36 44, 33 72, 35 92 C 37 76, 52 66, 63 75 C 74 84, 71 99, 58 101 C 47 103, 38 96, 35 87"/>
+      <path d="M82 85 C 96 83, 109 76, 107 67 C 105 59, 93 61, 88 72 C 82 85, 88 101, 102 101 C 111 101, 118 96, 123 89"/>
+      <path d="M150 22 C 145 52, 142 79, 145 93 C 148 103, 157 104, 164 98"/>
+      <path d="M131 57 C 141 55, 152 53, 163 52"/>
+      <path d="M205 73 C 200 63, 186 63, 181 76 C 176 89, 182 101, 193 99 C 202 97, 206 86, 206 71 C 206 87, 205 96, 210 100 C 214 103, 221 101, 226 94"/>
+    </svg>
+    <div class="beta__hi">오신 것을 환영합니다!</div>
+    <p class="beta__lead" id="betaLead">베타 기능이 켜졌습니다. 아직 다듬는 중이라 조금 어색할 수 있어요.</p>
+    <div class="beta__act">
+      <button class="btn btn--primary btn--block" id="btnBetaNew">신규 기능 확인</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-root" id="modalRoot"></div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
@@ -1414,6 +1499,13 @@ button.srow:hover .srow__n{ color:var(--text); }
           <td>닉네임, 프로필 사진</td>
           <td>이용자가 프로필 화면에서 직접 입력·업로드</td>
           <td>순위 및 화면에 표시할 이름·사진</td>
+          <td>삭제 요청 시 또는 회원 탈퇴 시까지</td>
+        </tr>
+        <tr>
+          <td>선택</td>
+          <td>하루 목표 시간, 시험 이름·날짜·목표 공부시간, 베타 참여 여부</td>
+          <td>이용자가 설정 화면에서 직접 입력</td>
+          <td>목표 달성률 표시, 시험까지 남은 날 계산, 베타 기능 제공</td>
           <td>삭제 요청 시 또는 회원 탈퇴 시까지</td>
         </tr>
         <tr>
@@ -1562,11 +1654,21 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.3.1"
+  VERSION:       "1.3.2"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.3.2",
+    d: "2026-09-10",
+    items: [
+      "베타 제도가 생겼습니다. 설정 › 업데이트 내역 › 최신 버전 확인에서 지금 열려 있는 베타를 보고 가입할 수 있습니다.",
+      "베타에 가입하면 앱을 껐다 다시 열었을 때부터 베타 기능이 켜지고, 처음 한 번 환영 화면이 나옵니다.",
+      "베타에 가입한 사람은 업데이트 내역을 정식·베타 두 가지로 나눠 볼 수 있습니다.",
+      "베타는 언제든 나갈 수 있고, 나가도 정해둔 내용은 지워지지 않습니다."
+    ]
+  },
   {
     v: "1.3.1",
     d: "2026-09-10",
@@ -1772,7 +1874,7 @@ const VIEW_TITLE = {
 };
 
 /* 그래프 보기 방식은 CHARTS 안의 ls 키에 그래프별로 저장합니다. */
-const LS = { theme:"jari.theme", timer:"jari.timer", view:"jari.view", goal:"jari.goal", simple:"jari.simple", tree:"jari.tree" };
+const LS = { theme:"jari.theme", timer:"jari.timer", view:"jari.view", goal:"jari.goal", simple:"jari.simple", tree:"jari.tree", logKind:"jari.logkind" };
 
 /* ===================== [2] 상태 ===================== */
 const S = {
@@ -1785,6 +1887,9 @@ const S = {
   goal: CONFIG.GOAL_DEFAULT,   // 오늘의 목표 (초). 0 이면 쓰지 않음
   simple: false,         // 기능 단순화 — 켜면 data-extra 가 붙은 칸을 숨깁니다
   tree: true,            // 집중 나무 보기
+  beta: false,           // 베타 기능 켜짐 (가입 뒤 다시 들어왔을 때부터)
+  exam: null,            // 시험 관리 설정 (베타)
+  logKind: "main",       // 업데이트 내역 — main | beta
   ready: false,
   timer: { running:false, startedAt:null, accumulated:0, seenAt:0 }, // ms 기준
   tickId: null,
@@ -3030,7 +3135,10 @@ function loadSimple(){
 function applySimple(on){
   S.simple = !!on;
   try { localStorage.setItem(LS.simple, S.simple ? "1" : "0"); } catch (e) {}
-  $$("[data-extra]").forEach(function(el){ el.hidden = S.simple; });
+  /* data-beta 가 붙은 칸은 베타에 가입해 있을 때만 보입니다. */
+  $$("[data-extra]").forEach(function(el){
+    el.hidden = S.simple || (el.hasAttribute("data-beta") && !S.beta);
+  });
   const b = $("#btnSimple");
   if (b) b.setAttribute("aria-checked", String(S.simple));
 }
@@ -4433,12 +4541,501 @@ function openPrivacyModal(){
   openModal({ title:"개인정보 처리방침", body:wrap, actions:[{ label:"확인", variant:"primary" }] });
 }
 
+/* ===================== [12-b] 베타 · 시험 관리 =====================
+   베타에 가입한 사람에게만 미리 열어두는 기능입니다.
+   - 가입 여부는 계정(sr_profiles.beta)에 저장하므로 기기가 바뀌어도 따라옵니다.
+   - 가입한 그 자리에서 바로 켜지지 않습니다. 앱을 껐다 다시 열었을 때부터
+     켜지고, 그때 한 번 환영 화면을 보여줍니다(beta_greeted).
+   - 베타가 끝나 정식으로 옮길 때는 BETA.open 을 false 로 하고,
+     아래 markup 의 data-beta 만 지우면 모두에게 보입니다. */
+
+const BETA = {
+  open: true,                       // 지금 모집 중인가
+  id:   "exam-2026-10",
+  name: "시험 관리 베타",
+  lead: "시험 날짜와 목표 공부시간을 정해두면, 공부방에 남은 날과 달성률이 뜹니다.",
+  items: [
+    "공부방 ‘오늘의 목표’ 바로 위에 시험 관리 칸이 생깁니다.",
+    "시험 이름과 날짜를 직접 정하면 D-day 를 세어 줍니다.",
+    "목표 공부시간을 정하면 지금까지 몇 %를 채웠는지 막대로 보여줍니다.",
+    "남은 날에 맞춰 하루에 얼마나 앉아야 하는지 알려줍니다.",
+    "기능 단순화를 켜면 이 칸도 함께 숨습니다."
+  ]
+};
+
+/* 베타에서만 쓰는 변경 내역입니다. 정식 내역(CHANGELOG)과 따로 둡니다. */
+const BETA_CHANGELOG = [
+  {
+    v: "beta 1",
+    d: "2026-09-10",
+    items: [
+      "시험 관리가 들어왔습니다. 시험 이름·날짜·목표 공부시간을 정할 수 있습니다.",
+      "공부방에 D-day, 목표 공부시간 달성률, 하루에 필요한 시간이 보입니다.",
+      "베타에 가입하면 업데이트 내역을 정식·베타 두 가지로 나눠 볼 수 있습니다."
+    ]
+  }
+];
+
+const EXAM_NAMES  = ["중간고사", "기말고사", "모의고사", "수능", "학력평가", "검정고시"];
+const EXAM_HOURS  = [10, 20, 30, 40, 50, 60, 80, 100, 150, 200];
+const EXAM_MAX_AHEAD = 400;   // 오늘로부터 이 날짜 안쪽만 고를 수 있습니다
+
+/* ── 가입 상태 읽기 ── */
+function loadBeta(){
+  const p = S.profile || {};
+  S.beta = !!p.beta;
+  S.exam = (p.exam && typeof p.exam === "object" && p.exam.date) ? p.exam : null;
+  try {
+    const k = localStorage.getItem(LS.logKind);
+    if (k === "beta" || k === "main") S.logKind = k;
+  } catch (e) {}
+}
+function applyBeta(){
+  applySimple(S.simple);            // data-beta 칸을 다시 계산합니다
+  const seg = $("#logSeg");
+  if (seg) seg.hidden = !S.beta;
+  if (!S.beta && S.logKind === "beta") S.logKind = "main";
+  renderExam();
+  renderChangelog();
+}
+
+/* ── 시험 관리 ─────────────────────────────────────────
+   시험 설정은 계정(sr_profiles.exam)에 담깁니다.
+   { name, date:"2026-10-06", hours:50, from:"2026-09-10" } */
+function examStats(){
+  const e = S.exam;
+  if (!e || !e.date) return null;
+  const today = dayKey(new Date());
+  const left  = keyDiffDays(today, e.date);          // 남은 날 수
+  const from  = e.from || today;
+  const hours = Math.max(1, Number(e.hours) || 50);
+  const goal  = hours * 3600;
+
+  let done = 0;
+  S.sessions.forEach(function(s){
+    const k = dayKey(s.ended_at || s.created_at);
+    if (!k) return;
+    if (keyDiffDays(from, k) >= 0 && keyDiffDays(k, e.date) >= 0) done += (s.duration_seconds || 0);
+  });
+
+  const pct  = Math.round((done / goal) * 100);      // 반올림
+  const rest = Math.max(0, goal - done);
+  /* 오늘도 공부할 수 있으니 남은 날에 오늘을 포함합니다. */
+  const days = Math.max(0, left) + (left >= 0 ? 1 : 0);
+  return {
+    name: String(e.name || "시험").slice(0, 20),
+    date: e.date, left: left, hours: hours,
+    goal: goal, done: done, rest: rest,
+    pct: pct, perDay: days > 0 ? Math.ceil(rest / days) : 0
+  };
+}
+
+function ddayText(left){
+  if (left > 0) return "D-" + left;
+  if (left === 0) return "D-DAY";
+  return "D+" + (-left);
+}
+
+function renderExam(){
+  const box = $("#examBox");
+  if (!box) return;
+  const card = $("#examCard"), btn = $("#btnExam");
+  const st = examStats();
+
+  if (!st){
+    if (btn) btn.textContent = "시험 정하기";
+    card.className = "card exam";
+    card.innerHTML = '<p class="exam__empty">아직 정한 시험이 없습니다. ' +
+      '<b>시험 정하기</b> 를 눌러 시험 이름과 날짜, 목표 공부시간을 정해보세요.</p>';
+    return;
+  }
+
+  if (btn) btn.textContent = "시험 바꾸기";
+  card.className = "card exam" +
+    (st.pct >= 100 ? " is-done" : "") +
+    (st.left < 0 ? " is-past" : (st.left <= 3 ? " is-soon" : ""));
+
+  const made = "<b>" + escapeHtml(st.hours + "시간") + "</b> 중 <b>" + escapeHtml(fmtDur(st.done)) + "</b> 했습니다.";
+  const hint = st.left < 0
+    ? made + " 시험이 끝났습니다. 새 시험을 정하면 처음부터 다시 셉니다."
+    : (st.rest <= 0
+        ? made + " 목표를 다 채웠습니다. 남은 날은 편하게 다지기만 하면 됩니다."
+        : (st.left === 0
+            ? made + " 오늘이 시험입니다."
+            : made + " 남은 " + (st.left + 1) + "일 동안 하루 <b>" + escapeHtml(fmtDur(st.perDay)) + "</b> 씩이면 채웁니다."));
+
+  card.innerHTML =
+    '<div class="exam__top">' +
+      '<span class="exam__dday num">' + escapeHtml(ddayText(st.left)) + '</span>' +
+      '<span class="exam__name">' + escapeHtml(st.name) + '</span>' +
+      '<span class="exam__date num">' + escapeHtml(fmtDayKey(st.date)) + '</span>' +
+    '</div>' +
+    '<div class="exam__line">' +
+      '<span>목표 공부시간</span>' +
+      '<span class="exam__pct num">' + Math.min(999, st.pct) + '% 완료</span>' +
+    '</div>' +
+    '<div class="gauge"><div class="gauge__fill" style="width:' + Math.max(0, Math.min(100, st.pct)) + '%"></div></div>' +
+    '<div class="gauge__hint">' + hint + '</div>';
+}
+
+async function saveExam(exam){
+  S.exam = exam;
+  renderExam();
+  if (!S.user || !S.sb) return true;
+  try {
+    const { error } = await S.sb.from("sr_profiles")
+      .update({ exam: exam, updated_at: new Date().toISOString() })
+      .eq("id", S.user.id);
+    if (error){ toast("이 기기에서만 바뀌었습니다."); return false; }
+  } catch (e) { toast("이 기기에서만 바뀌었습니다."); return false; }
+  return true;
+}
+
+/* 오늘 기준으로 고를 수 있는 날짜의 처음과 끝 */
+function examDateRange(){
+  const t = new Date();
+  const lo = new Date(t.getTime() - 30 * 86400000);
+  const hi = new Date(t.getTime() + EXAM_MAX_AHEAD * 86400000);
+  return { lo: dayKey(lo), hi: dayKey(hi) };
+}
+
+function openExamModal(){
+  const cur = S.exam || {};
+  const wrap = document.createElement("div");
+  wrap.setAttribute("data-no-swipe", "");
+
+  let name  = String(cur.name || "중간고사").slice(0, 20);
+  let date  = cur.date || "";
+  let hours = Number(cur.hours) || 50;
+
+  /* 이름 */
+  const l1 = document.createElement("div");
+  l1.className = "field__label"; l1.textContent = "시험 이름";
+  wrap.appendChild(l1);
+
+  const inName = document.createElement("input");
+  inName.className = "input"; inName.type = "text"; inName.maxLength = 20;
+  inName.value = name; inName.autocomplete = "off"; inName.placeholder = "예: 중간고사";
+  inName.addEventListener("input", function(){ name = inName.value; });
+  wrap.appendChild(inName);
+
+  const chips = document.createElement("div");
+  chips.className = "admbox"; chips.style.marginTop = "8px";
+  EXAM_NAMES.forEach(function(t){
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "year"; b.textContent = t;
+    b.addEventListener("click", function(){ name = t; inName.value = t; });
+    chips.appendChild(b);
+  });
+  wrap.appendChild(chips);
+
+  /* 날짜 */
+  const rg = examDateRange();
+  const l2 = document.createElement("div");
+  l2.className = "field__label"; l2.style.marginTop = "16px"; l2.textContent = "시험 날짜";
+  wrap.appendChild(l2);
+
+  const inDate = document.createElement("input");
+  inDate.className = "input"; inDate.type = "date";
+  inDate.min = rg.lo; inDate.max = rg.hi;
+  inDate.value = date;
+  inDate.addEventListener("input", function(){ date = inDate.value; paintLeft(); });
+  wrap.appendChild(inDate);
+
+  const leftNote = document.createElement("p");
+  leftNote.className = "seg__note";
+  wrap.appendChild(leftNote);
+
+  /* 목표 공부시간 */
+  const l3 = document.createElement("div");
+  l3.className = "field__label"; l3.style.marginTop = "16px"; l3.textContent = "목표 공부시간";
+  wrap.appendChild(l3);
+
+  const grid = document.createElement("div");
+  grid.className = "years";
+  function markHours(){
+    $$(".year", grid).forEach(function(b){
+      b.setAttribute("aria-pressed", String(Number(b.dataset.h) === hours));
+    });
+  }
+  EXAM_HOURS.forEach(function(h){
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "year"; b.dataset.h = h;
+    b.textContent = h + "시간";
+    b.addEventListener("click", function(){ hours = h; markHours(); paintLeft(); });
+    grid.appendChild(b);
+  });
+  markHours();
+  wrap.appendChild(grid);
+
+  const howNote = document.createElement("p");
+  howNote.className = "seg__note";
+  howNote.textContent = S.exam
+    ? "공부한 시간은 시험을 처음 정한 날부터 셉니다. 날짜나 목표를 바꿔도 지금까지 센 시간은 그대로입니다. 처음부터 다시 세려면 지우고 새로 정하세요."
+    : "오늘부터 시험 날까지 앉은 시간을 세어 목표와 견줍니다.";
+  wrap.appendChild(howNote);
+
+  function paintLeft(){
+    if (!date){ leftNote.textContent = "날짜를 고르면 남은 날을 세어 드립니다."; return; }
+    const left = keyDiffDays(dayKey(new Date()), date);
+    const per  = Math.ceil((hours * 3600) / Math.max(1, left + 1));
+    leftNote.innerHTML = escapeHtml(fmtDayKey(date)) + " · <b>" + escapeHtml(ddayText(left)) + "</b>" +
+      (left >= 0 ? " · 하루 " + escapeHtml(fmtDur(per)) + " 씩이면 " + hours + "시간을 채웁니다." : " · 이미 지난 날짜입니다.");
+  }
+  paintLeft();
+
+  const acts = [{ label:"취소", variant:"ghost" }];
+  if (S.exam){
+    acts.push({ label:"지우기", variant:"danger", onClick: function(){
+      saveExam(null);
+      toast("시험을 지웠습니다.");
+    } });
+  }
+  acts.push({ label:"정하기", variant:"primary", onClick: function(){
+    const nm = String(inName.value || "").trim().slice(0, 20) || "시험";
+    if (!date){ toast("시험 날짜를 골라주세요."); return false; }
+    if (keyDiffDays(rg.lo, date) < 0 || keyDiffDays(date, rg.hi) < 0){
+      toast("오늘로부터 1년 안쪽 날짜만 됩니다."); return false;
+    }
+    const today = dayKey(new Date());
+    const live  = S.exam && S.exam.from && keyDiffDays(today, S.exam.date) >= 0;
+    const keep  = live ? S.exam.from : today;
+    saveExam({ name: nm, date: date, hours: hours, from: keep });
+    toast("<b>" + escapeHtml(nm) + "</b> · " + escapeHtml(ddayText(keyDiffDays(dayKey(new Date()), date))));
+  } });
+
+  openModal({
+    title: "시험 관리",
+    desc: "시험 날짜와 목표 공부시간을 정해두면 공부방에서 바로 보입니다.",
+    body: wrap,
+    actions: acts
+  });
+}
+
+/* ── 최신 버전 확인 → 베타 가입 ───────────────────────── */
+function openVersionModal(){
+  const wrap = document.createElement("div");
+  wrap.setAttribute("data-no-swipe", "");
+
+  const rows = document.createElement("div");
+  rows.className = "rows";
+  const row = document.createElement("button");
+  row.type = "button"; row.className = "row";
+  row.innerHTML =
+    '<span class="row__label"><span style="font-weight:600">v' + escapeHtml(CONFIG.VERSION) + '</span>' +
+    '<span class="row__sub">최신 버전입니다. 눌러서 더 보기</span></span>' +
+    '<svg class="row__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+  rows.appendChild(row);
+  wrap.appendChild(rows);
+
+  const more = document.createElement("div");
+  more.style.marginTop = "12px";
+  more.hidden = true;
+  const btn = document.createElement("button");
+  btn.type = "button"; btn.className = "btn btn--quiet btn--block";
+  btn.textContent = "가입 가능한 베타 보기";
+  more.appendChild(btn);
+  const note = document.createElement("p");
+  note.className = "seg__note";
+  note.textContent = "베타는 아직 다듬는 중인 기능을 먼저 써보는 것입니다. 언제든 나갈 수 있습니다.";
+  more.appendChild(note);
+  wrap.appendChild(more);
+
+  const h = openModal({
+    title: "최신 버전 확인",
+    desc: "지금 쓰고 있는 버전입니다.",
+    body: wrap,
+    actions: [{ label:"닫기", variant:"ghost" }]
+  });
+
+  row.addEventListener("click", function(){ more.hidden = false; });
+  btn.addEventListener("click", function(){ h.close(); openBetaList(); });
+}
+
+function openBetaList(){
+  if (!BETA.open && !S.beta){
+    alertModal("가입 가능한 베타가 없습니다", "지금은 모집 중인 베타가 없습니다. 새 베타가 열리면 여기에 보입니다.");
+    return;
+  }
+
+  if (S.beta){
+    openModal({
+      title: BETA.name,
+      desc: "이미 가입되어 있습니다. " + BETA.lead,
+      body: betaItemsNode(),
+      actions: [
+        { label:"닫기", variant:"ghost" },
+        { label:"베타 나가기", variant:"danger", onClick: function(){ leaveBeta(); } }
+      ]
+    });
+    return;
+  }
+
+  openModal({
+    title: BETA.name,
+    desc: BETA.lead + " 가입하시겠습니까?",
+    body: betaItemsNode(),
+    actions: [
+      { label:"아니요", variant:"ghost" },
+      { label:"네", variant:"primary", onClick: function(){ joinBeta(); } }
+    ]
+  });
+}
+
+function betaItemsNode(){
+  const wrap = document.createElement("div");
+  wrap.setAttribute("data-no-swipe", "");
+  const ul = document.createElement("ul");
+  ul.className = "rel__list";
+  ul.style.padding = "0";
+  BETA.items.forEach(function(t){
+    const li = document.createElement("li");
+    li.textContent = t;
+    ul.appendChild(li);
+  });
+  wrap.appendChild(ul);
+  return wrap;
+}
+
+async function setBetaFlag(on, greeted){
+  if (!S.user || !S.sb) return false;
+  const patch = { beta: !!on, updated_at: new Date().toISOString() };
+  if (greeted !== undefined) patch.beta_greeted = !!greeted;
+  try {
+    const { error } = await S.sb.from("sr_profiles").update(patch).eq("id", S.user.id);
+    if (error) return false;
+  } catch (e) { return false; }
+  if (S.profile){
+    S.profile.beta = !!on;
+    if (greeted !== undefined) S.profile.beta_greeted = !!greeted;
+  }
+  return true;
+}
+
+async function joinBeta(){
+  if (S.busy) return;
+  S.busy = true;
+  const ok = await setBetaFlag(true, false);
+  S.busy = false;
+  if (!ok){
+    await alertModal("가입하지 못했습니다", "인터넷 연결을 확인하고 다시 시도해 주세요.");
+    return;
+  }
+  openModal({
+    title: "베타에 가입했습니다",
+    desc: "베타 기능은 앱을 껐다 다시 열었을 때부터 켜집니다. 지금 바로 열어볼까요?",
+    actions: [
+      { label:"나중에", variant:"ghost" },
+      { label:"지금 다시 열기", variant:"primary", onClick: function(){ location.reload(); } }
+    ]
+  });
+}
+
+async function leaveBeta(){
+  const ok = await confirmModal("베타에서 나갈까요?",
+    "베타 기능이 숨겨집니다. 정해둔 시험은 지워지지 않으니, 다시 가입하면 그대로 보입니다.", "나가기", true);
+  if (!ok) return;
+  const done = await setBetaFlag(false, false);
+  if (!done){
+    await alertModal("나가지 못했습니다", "인터넷 연결을 확인하고 다시 시도해 주세요.");
+    return;
+  }
+  S.beta = false;
+  applyBeta();
+  toast("베타에서 나왔습니다.");
+}
+
+/* ── 환영 화면 ──
+   가입한 다음 처음 들어왔을 때 한 번만 보여줍니다. */
+function showBetaWelcome(){
+  return new Promise(function(resolve){
+    const el = $("#betaWelcome");
+    if (!el){ resolve(); return; }
+
+    closeNav();
+    $("#app").style.visibility = "hidden";
+    el.hidden = false;
+    $("#betaLead").textContent = BETA.lead;
+
+    /* 손글씨처럼 한 획씩 그립니다. */
+    const paths = $$("#betaMark path");
+    let at = 0;
+    paths.forEach(function(p){
+      let len = 300;
+      try { len = p.getTotalLength(); } catch (e) {}
+      p.style.transition = "none";
+      p.style.strokeDasharray  = len;
+      p.style.strokeDashoffset = len;
+      p.dataset.at = at;
+      at += Math.max(260, len * 2.2);
+    });
+    /* 한 프레임 뒤에 시작해야 브라우저가 처음 상태를 그리고 넘어갑니다. */
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        paths.forEach(function(p){
+          let len = 300;
+          try { len = p.getTotalLength(); } catch (e) {}
+          const dur = Math.max(320, len * 2.4);
+          p.style.transition = "stroke-dashoffset " + Math.round(dur) + "ms ease-in-out " + p.dataset.at + "ms";
+          p.style.strokeDashoffset = "0";
+        });
+        setTimeout(function(){ el.classList.add("is-on"); }, Math.min(2200, at + 120));
+      });
+    });
+
+    const btn = $("#btnBetaNew");
+    async function done(){
+      btn.removeEventListener("click", done);
+      btn.disabled = true;
+      await openModal2({
+        title: "이번에 들어온 기능",
+        desc: BETA.name + " 에서 먼저 써볼 수 있는 것들입니다.",
+        body: betaItemsNode()
+      });
+      el.classList.remove("is-on");
+      el.hidden = true;
+      btn.disabled = false;
+      $("#app").style.visibility = "";
+      setBetaFlag(true, true);          // 다음부터는 보여주지 않습니다
+      resolve();
+    }
+    btn.addEventListener("click", done);
+  });
+}
+
+/* 확인 하나짜리 모달을 기다리는 작은 도우미 */
+function openModal2(opt){
+  return new Promise(function(resolve){
+    openModal(Object.assign({}, opt, {
+      onClose: function(){ resolve(true); },
+      actions: [{ label:"확인하고 시작하기", variant:"primary" }]
+    }));
+  });
+}
+
 /* 맨 위(가장 최신) 하나만 펼쳐두고, 나머지는 버전을 누르면 펼쳐집니다. */
+function setLogKind(kind){
+  S.logKind = (kind === "beta" && S.beta) ? "beta" : "main";
+  try { localStorage.setItem(LS.logKind, S.logKind); } catch (e) {}
+  $$("#logSeg .seg__opt").forEach(function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.log === S.logKind));
+  });
+  renderChangelog();
+}
 function renderChangelog(){
   const box = $("#changelog");
   box.innerHTML = "";
-  $("#verNow").textContent = "v" + CONFIG.VERSION;
-  CHANGELOG.forEach(function(rel, i){
+  const seg = $("#logSeg");
+  if (seg) seg.hidden = !S.beta;
+  $$("#logSeg .seg__opt").forEach(function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.log === S.logKind));
+  });
+  const list = (S.beta && S.logKind === "beta") ? BETA_CHANGELOG : CHANGELOG;
+  if (!list.length){
+    box.innerHTML = '<div class="empty">아직 내역이 없습니다.</div>';
+    return;
+  }
+  list.forEach(function(rel, i){
     const open = (i === 0);
     const el = document.createElement("div");
     el.className = "row rel";
@@ -4450,7 +5047,7 @@ function renderChangelog(){
     head.className = "rel__ver";
     head.setAttribute("aria-expanded", String(open));
     head.innerHTML =
-      '<span class="rel__n">v' + escapeHtml(rel.v) + '</span>' +
+      '<span class="rel__n">' + (/^\d/.test(rel.v) ? "v" : "") + escapeHtml(rel.v) + '</span>' +
       '<span class="rel__d">' + escapeHtml(rel.d) + '</span>' +
       '<span class="rel__cnt">' + rel.items.length + '개</span>' +
       '<svg class="rel__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
@@ -5028,6 +5625,7 @@ function initAdminUI(){
 
 function renderAll(){
   applyCosmetics();
+  renderExam();
   paintGoal();
   paintStreak();
   paintTree();
@@ -5056,6 +5654,11 @@ function bindUI(){
   $("#btnLogout").addEventListener("click", signOut);
 
   $("#btnGoal").addEventListener("click", openGoalModal);
+  $("#btnExam").addEventListener("click", openExamModal);
+  $("#btnVer").addEventListener("click", openVersionModal);
+  $$("#logSeg .seg__opt").forEach(function(b){
+    b.addEventListener("click", function(){ setLogKind(b.dataset.log); });
+  });
   $("#btnTree").addEventListener("click", toggleTree);
   $("#calPrev").addEventListener("click", function(){ calShift(-1); });
   $("#calNext").addEventListener("click", function(){ calShift(1); });
@@ -5168,6 +5771,7 @@ async function handleSession(session){
 
   await ensureProfile(S.user);
   loadGoal();
+  loadBeta();
   paintProfile();
 
   /* 이용이 제한된 계정이면 여기서 화면을 잠그고 끝냅니다. */
@@ -5177,6 +5781,11 @@ async function handleSession(session){
 
   /* 만 14세 미만 확인 — 출생 년도가 없으면 여기서 반드시 묻습니다. */
   if (!(await checkAge())) return;
+
+  /* 베타에 가입한 뒤 처음 들어왔다면 환영 화면을 한 번 보여줍니다. */
+  if (S.beta && S.profile && !S.profile.beta_greeted) await showBetaWelcome();
+
+  applyBeta();
 
   await loadSessions();
   renderAll();
