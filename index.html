@@ -492,6 +492,31 @@ html[data-theme="dark"] .day__t--4{ color:#241A08; }
 .badge.is-got .badge__ico{ background:var(--accent); color:var(--accent-ink); }
 .badge.is-locked .badge__t{ color:var(--muted); }
 
+/* 이용 제한 화면 */
+.banico{
+  width:54px; height:54px; margin-bottom:18px;
+  border-radius:16px; display:grid; place-items:center;
+  background:color-mix(in srgb, var(--danger) 12%, transparent);
+  color:var(--danger);
+}
+.banico svg{ width:27px; height:27px; }
+#banScreen .gate__mark span{ color:var(--danger); }
+
+/* 관리자 목록 */
+.tag{
+  display:inline-block; margin-left:6px; padding:1px 6px;
+  border-radius:6px; font-size:.66rem; font-weight:650;
+  background:var(--surface-2); color:var(--muted); vertical-align:1px;
+}
+.tag--adm{ color:var(--accent); }
+.tag--ban{ color:var(--danger); }
+.tag--test{ color:var(--ok); }
+.admbox{ display:flex; flex-wrap:wrap; gap:7px; padding:2px 0 4px; }
+.admbox .year{ flex:1 1 auto; min-width:62px; }
+.admhead{ font-size:.8rem; font-weight:650; margin:14px 0 8px; }
+.admhead:first-child{ margin-top:2px; }
+.admnow{ font-size:.76rem; color:var(--muted); font-weight:500; margin-left:6px; }
+
 /* 이름 옆 뱃지 */
 .mark{ display:inline-block; margin-left:5px; color:var(--accent); vertical-align:-2px; }
 .mark svg{ width:13px; height:13px; }
@@ -1109,6 +1134,28 @@ button.srow:hover .srow__n{ color:var(--text); }
         </div>
       </section>
 
+      <!-- ─────────── 관리자 설정 ─────────── -->
+      <section class="view" data-view="admin" hidden>
+        <div class="section">
+          <div class="card card--flat">
+            <button class="row" id="btnDummy" role="switch" aria-checked="false" style="padding:0;border-bottom:none">
+              <span class="row__label">테스트용 더미 데이터<span class="row__sub">실제 회원 대신 가짜 목록으로 눌러볼 수 있습니다. 서버에는 아무것도 보내지 않습니다.</span></span>
+              <span class="switch" aria-hidden="true"><span class="switch__dot"></span></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section__head">
+            <h2 class="section__title">회원</h2>
+            <span class="section__note num" id="admCount">—</span>
+          </div>
+          <input class="input" id="admQ" type="text" placeholder="닉네임이나 회원 코드로 찾기" autocomplete="off" />
+          <div class="rows" id="admList" style="margin-top:11px"><div class="empty">불러오는 중…</div></div>
+          <p class="seg__note">회원 번호(UUID)는 화면에 보이지 않습니다. 대신 6자리 <b>회원 코드</b>로 구분합니다.</p>
+        </div>
+      </section>
+
       <!-- ─────────── 상점 ─────────── -->
       <section class="view" data-view="shop" hidden>
         <div class="section">
@@ -1266,6 +1313,10 @@ button.srow:hover .srow__n{ color:var(--text); }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.2-2.8 7.8-7 9-4.2-1.2-7-4.8-7-9V6z"/><path d="M9.5 12.2l1.8 1.8 3.4-3.6"/></svg>
       <span>개인정보 처리방침</span>
     </button>
+    <button class="navitem" data-go="admin" id="navAdmin" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.2-2.8 7.8-7 9-4.2-1.2-7-4.8-7-9V6z"/><path d="M12 8.5v4M12 15.4v.2"/></svg>
+      <span>관리자 설정</span>
+    </button>
     <button class="navitem" data-go="settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg>
       <span>설정</span>
@@ -1306,6 +1357,21 @@ button.srow:hover .srow__n{ color:var(--text); }
       계속하면 <button type="button" id="btnGatePrivacy">개인정보 처리방침</button>에 동의하는 것으로 봅니다.<br/>
       만 14세 미만은 법정대리인의 동의가 필요합니다.
     </p>
+  </div>
+</div>
+
+<!-- ============================ 이용 제한 ============================ -->
+<div class="gate" id="banScreen" hidden>
+  <div class="gate__in">
+    <div class="banico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>
+    </div>
+    <div class="gate__mark" style="font-size:1.6rem">이 계정은<br/>이용이 <span>제한</span>되었습니다</div>
+    <p class="gate__lead" id="banLead">—</p>
+    <div class="notice" id="banReason" hidden></div>
+    <div class="gate__rule"></div>
+    <button class="btn btn--ghost btn--block" id="btnBanOut">로그아웃</button>
+    <p class="gate__fine">잘못된 제한이라고 생각되면 <span data-fill="email">운영자</span>에게 알려주세요.</p>
   </div>
 </div>
 
@@ -1494,11 +1560,24 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.2.5"
+  VERSION:       "1.3.0"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.3.0",
+    d: "2026-09-10",
+    items: [
+      "관리자 설정 탭이 생겼습니다. 관리자로 등록된 계정에만 사이드바에 나타납니다.",
+      "관리자는 회원에게 포인트를 줄 수 있습니다. 목록에는 회원 번호(UUID) 대신 6자리 회원 코드만 보여, 남의 번호가 드러나지 않습니다.",
+      "정책을 어긴 회원은 1일부터 70일까지 이용을 제한할 수 있고, 그보다 길게 정하면 영구 제한입니다. 제한은 언제든 풀 수 있습니다.",
+      "관리자는 다른 관리자를 제한할 수 없습니다.",
+      "제한된 계정으로 들어오면 안내 화면만 보이고 기록 저장·상점 구매가 막힙니다. 이 검사는 서버에서도 하므로 화면을 건드려도 저장되지 않습니다.",
+      "제한이 풀린 뒤 처음 들어오면 앞으로 규칙을 지켜달라는 안내가 한 번 보입니다.",
+      "테스트용 더미 데이터를 켜면 가짜 회원 목록으로 눌러볼 수 있습니다. 서버에는 아무것도 보내지 않습니다."
+    ]
+  },
   {
     v: "1.2.5",
     d: "2026-09-10",
@@ -1678,7 +1757,7 @@ const CHANGELOG = [
 
 const VIEW_TITLE = {
   room:"공부방", log:"기록", rank:"랭킹", shop:"상점",
-  profile:"프로필", privacy:"개인정보 처리방침", settings:"설정"
+  profile:"프로필", privacy:"개인정보 처리방침", admin:"관리자 설정", settings:"설정"
 };
 
 /* 그래프 보기 방식은 CHARTS 안의 ls 키에 그래프별로 저장합니다. */
@@ -2129,6 +2208,7 @@ function initNav(){
 /* ===================== [7] 라우팅 ===================== */
 function go(view){
   if (!VIEW_TITLE[view]) view = "room";
+  if (view === "admin" && !ADM.is) view = "room";   // 관리자가 아니면 들어올 수 없습니다
   if (S.view !== view && S.view !== "privacy") S.prevView = S.view;
   S.view = view;
   $$(".view").forEach(function(sec){ sec.hidden = sec.dataset.view !== view; });
@@ -2142,6 +2222,7 @@ function go(view){
   if (view === "rank") loadRank();
   if (view === "log") renderLog();
   if (view === "shop") renderShop();
+  if (view === "admin") loadAdminUsers();
 }
 function initRouting(){
   document.addEventListener("click", function(e){
@@ -2196,6 +2277,7 @@ async function signOut(){
 }
 
 function showGate(show){
+  if (show){ const b = $("#banScreen"); if (b) b.hidden = true; }
   $("#gate").hidden = !show;
   $("#app").style.visibility = show ? "hidden" : "";
   if (show) closeNav();
@@ -2861,6 +2943,10 @@ async function finishSession(){
   S.busy = false;
 
   if (error){
+    if (String(error.message || "").indexOf("BANNED") >= 0){
+      await refreshBan();          // 쓰는 도중에 제한된 경우
+      return;
+    }
     alertModal("기록하지 못했습니다", (error.message || "네트워크를 확인해 주세요.") + " 타이머는 그대로 남아 있습니다.");
     paintTimer();
     return;
@@ -4276,6 +4362,7 @@ async function tapItem(it){
   S.busy = false;
 
   if (err || !res){
+    if (err && String(err.message || "").indexOf("BANNED") >= 0){ await refreshBan(); return; }
     await alertModal("사지 못했습니다", (err && err.message) ? String(err.message).slice(0, 120) : "잠시 후 다시 시도해 주세요.");
     return;
   }
@@ -4379,6 +4466,514 @@ function renderChangelog(){
 }
 
 /* ===================== [13] 부팅 ===================== */
+/* ===================== [13] 관리자 설정 · 이용 제한 =====================
+   관리자인지, 포인트를 줄 수 있는지, 누구를 제한할 수 있는지는 모두 서버가
+   판단합니다(sr_am_i_admin / sr_admin_* 함수, SECURITY DEFINER).
+   아래 코드는 화면을 그리고 그 함수를 부르는 일만 합니다. 브라우저에서
+   ADMIN_IDS 를 고쳐도 서버가 sr_admins 표를 보고 거절합니다.
+   회원 번호(UUID)는 목록에 절대 찍지 않습니다. 6자리 회원 코드만 보여줍니다. */
+
+const ADMIN_IDS = ["6a0f1fa1-0178-4e89-ae05-b288763853de"];
+const BAN_FOREVER = Date.parse("2400-01-01T00:00:00Z");   // 이보다 뒤면 영구로 봅니다(서버는 9999-12-31)
+const BAN_DAYS    = [1, 3, 7, 14, 30, 70];                // 1~70일. 그보다 길면 영구
+const GRANT_STEPS = [10, 30, 50, 100, 300];
+
+const ADM = { is:false, dummy:false, list:[], dummyList:null, qTimer:null };
+
+const ADM_ERR = {
+  FORBIDDEN:       "관리자만 할 수 있습니다.",
+  TARGET_IS_ADMIN: "관리자는 다른 관리자를 제한할 수 없습니다.",
+  NO_USER:         "그 회원을 찾지 못했습니다.",
+  BAD_DAYS:        "제한 기간은 1일부터 정할 수 있습니다.",
+  BAD_AMOUNT:      "포인트는 한 번에 100,000점까지만 옮길 수 있습니다."
+};
+function admErr(e){
+  const m = (e && e.message) ? String(e.message) : "";
+  const keys = Object.keys(ADM_ERR);
+  for (let i = 0; i < keys.length; i++){
+    if (m.indexOf(keys[i]) >= 0) return ADM_ERR[keys[i]];
+  }
+  return m ? m.slice(0, 120) : "잠시 후 다시 시도해 주세요.";
+}
+function shortName(u){ return String((u && u.display_name) || "이름 없음").slice(0, 24); }
+
+/* ── 제한 상태 읽기 ── */
+function banAt(p){
+  const t = (p && p.banned_until) ? Date.parse(p.banned_until) : NaN;
+  return isNaN(t) ? 0 : t;
+}
+function banOn(p){ return banAt(p) > Date.now(); }
+function banForever(ms){ return ms >= BAN_FOREVER; }
+function fmtBanWhen(ms){
+  const d = new Date(ms);
+  return d.getFullYear() + "년 " + (d.getMonth() + 1) + "월 " + d.getDate() + "일 " +
+         pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+}
+function banLeft(ms){
+  const left = Math.max(0, ms - Date.now());
+  const day  = Math.floor(left / 86400000);
+  const hour = Math.floor((left % 86400000) / 3600000);
+  const min  = Math.floor((left % 3600000) / 60000);
+  if (day  >= 1) return day + "일" + (hour ? " " + hour + "시간" : "");
+  if (hour >= 1) return hour + "시간" + (min ? " " + min + "분" : "");
+  return Math.max(1, min) + "분";
+}
+function banStateText(p, short){
+  const t = banAt(p);
+  if (t <= Date.now()) return "";
+  if (banForever(t)) return "영구 제한";
+  const d = new Date(t);
+  return short
+    ? ((d.getMonth() + 1) + "월 " + d.getDate() + "일까지")
+    : (fmtBanWhen(t) + "까지 제한");
+}
+
+/* ── 제한된 계정 화면 ──
+   로그인은 됐지만 앱을 아예 못 쓰게 덮습니다. 서버 쪽에서도 기록 저장·구매가
+   막혀 있으므로, 이 화면을 개발자 도구로 지워도 아무것도 저장되지 않습니다. */
+function showBan(p){
+  stopTimer(true);
+  closeNav();
+  S.ready = true;
+
+  const until = banAt(p);
+  const perm  = banForever(until);
+
+  $("#gate").hidden = true;
+  $("#app").style.visibility = "hidden";
+
+  const el = $("#banScreen");
+  el.hidden = false;
+  fillPrivacy(el);
+
+  $("#banLead").textContent = perm
+    ? "이 계정은 관리자에 의해 영구적으로 이용이 제한되었습니다. 앞으로 이 계정으로는 자리를 쓸 수 없습니다."
+    : "이 계정은 관리자에 의해 " + fmtBanWhen(until) + " 까지 이용이 제한되었습니다. " +
+      "약 " + banLeft(until) + " 남았습니다. 제한이 풀리면 다시 로그인해 그대로 이어서 쓸 수 있습니다.";
+
+  const r = $("#banReason");
+  if (p && p.ban_reason){
+    r.hidden = false;
+    r.innerHTML = "사유 · <strong>" + escapeHtml(String(p.ban_reason).slice(0, 120)) + "</strong>";
+  } else {
+    r.hidden = true;
+  }
+}
+
+/* 제한이 풀린 뒤 처음 들어왔을 때 한 번 보여주는 안내 */
+async function showRelease(){
+  await alertModal("이용 제한이 풀렸습니다",
+    "앞으로는 규칙을 지켜주세요. 같은 일이 반복되면 더 긴 기간 제한되거나, 계정을 영구히 쓸 수 없게 됩니다. " +
+    "자리는 서로의 공부를 위한 곳입니다. 기록은 그대로 남아 있습니다.");
+  try { await S.sb.rpc("sr_ack_ban"); } catch (e) {}
+  if (S.profile){
+    S.profile.banned_until = null;
+    S.profile.ban_reason   = null;
+    S.profile.ban_notice   = false;
+  }
+}
+
+/* 로그인 직후 관문. true 면 계속 진행, false 면 제한 화면으로 멈춥니다. */
+async function checkBan(){
+  const p = S.profile;
+  if (!p) return true;
+  if (banOn(p)){ showBan(p); return false; }
+  if (p.ban_notice) await showRelease();
+  return true;
+}
+
+/* 쓰는 도중에 제한되었을 때(서버가 BANNED 를 돌려줬을 때) 다시 확인합니다. */
+async function refreshBan(){
+  if (!S.sb || !S.user) return true;
+  try {
+    const { data } = await S.sb.from("sr_profiles")
+      .select("banned_until,ban_reason,ban_notice").eq("id", S.user.id).maybeSingle();
+    if (data && S.profile){
+      S.profile.banned_until = data.banned_until;
+      S.profile.ban_reason   = data.ban_reason;
+      S.profile.ban_notice   = data.ban_notice;
+    }
+  } catch (e) {}
+  return checkBan();
+}
+
+/* ── 관리자인지 확인 ── */
+function paintAdminNav(){
+  const n = $("#navAdmin");
+  if (n) n.hidden = !ADM.is;
+  if (!ADM.is && S.view === "admin") go("room");
+}
+async function checkAdmin(){
+  ADM.is = !!(S.user && ADMIN_IDS.indexOf(S.user.id) >= 0);
+  paintAdminNav();
+  if (!S.sb || !S.user) return;
+  try {
+    const { data, error } = await S.sb.rpc("sr_am_i_admin");
+    if (!error && typeof data === "boolean"){ ADM.is = data; paintAdminNav(); }
+  } catch (e) {}
+}
+
+/* ── 테스트용 더미 데이터 ──
+   서버에 한 글자도 보내지 않습니다. 눌러보는 연습용입니다. */
+function makeDummy(){
+  const now = Date.now();
+  return [
+    { id:"dummy-1", code:"7f3a01", display_name:"테스트 · 김공부", points:428, total_seconds:396000, session_count:112, banned_until:null, ban_reason:null, is_admin:false },
+    { id:"dummy-2", code:"1c9b44", display_name:"테스트 · 이집중", points:96,  total_seconds:73800,  session_count:31,  banned_until:null, ban_reason:null, is_admin:false },
+    { id:"dummy-3", code:"b20e5d", display_name:"테스트 · 박열공", points:12,  total_seconds:9000,   session_count:5,
+      banned_until:new Date(now + 3 * 86400000).toISOString(), ban_reason:"기록 조작", is_admin:false },
+    { id:"dummy-4", code:"55aa02", display_name:"테스트 · 최오래", points:0,   total_seconds:1800,   session_count:1,
+      banned_until:"9999-12-31T00:00:00+00:00", ban_reason:"반복된 정책 위반", is_admin:false },
+    { id:"dummy-5", code:"e0d7c8", display_name:"테스트 · 관리자", points:1000, total_seconds:180000, session_count:60, banned_until:null, ban_reason:null, is_admin:true }
+  ];
+}
+function dummyFiltered(q){
+  if (!ADM.dummyList) ADM.dummyList = makeDummy();
+  const k = String(q || "").trim().toLowerCase();
+  if (!k) return ADM.dummyList;
+  return ADM.dummyList.filter(function(u){
+    return String(u.display_name).toLowerCase().indexOf(k) >= 0 || u.code === k;
+  });
+}
+
+/* ── 회원 목록 ── */
+async function loadAdminUsers(){
+  const box = $("#admList");
+  if (!box) return;
+  if (!ADM.is){
+    box.innerHTML = '<div class="empty">관리자만 볼 수 있습니다.</div>';
+    const c0 = $("#admCount"); if (c0) c0.textContent = "—";
+    return;
+  }
+  const qEl = $("#admQ");
+  const q = qEl ? qEl.value.trim() : "";
+
+  if (ADM.dummy){ ADM.list = dummyFiltered(q); renderAdminList(); return; }
+
+  box.innerHTML = '<div class="empty">불러오는 중…</div>';
+  try {
+    const { data, error } = await S.sb.rpc("sr_admin_users", { p_q: q || null, p_limit: 60 });
+    if (error) throw error;
+    ADM.list = data || [];
+  } catch (e) {
+    box.innerHTML = '<div class="empty">회원을 불러오지 못했습니다.</div>';
+    const c1 = $("#admCount"); if (c1) c1.textContent = "—";
+    return;
+  }
+  renderAdminList();
+}
+
+function renderAdminList(){
+  const box = $("#admList");
+  if (!box) return;
+  const list = ADM.list || [];
+  const cnt = $("#admCount");
+  if (cnt) cnt.textContent = list.length + "명" + (ADM.dummy ? " · 더미" : "");
+
+  box.innerHTML = "";
+  if (!list.length){
+    box.innerHTML = '<div class="empty">찾는 회원이 없습니다.</div>';
+    return;
+  }
+  list.forEach(function(u){
+    const row = document.createElement("button");
+    row.type = "button";
+    row.className = "row" + (S.user && u.id === S.user.id ? " is-me" : "");
+
+    const av = document.createElement("div");
+    av.className = "avatar avatar--sm";
+    paintAvatar(av, null, shortName(u));
+
+    const tags = (u.is_admin ? '<span class="tag tag--adm">관리자</span>' : "") +
+                 (banOn(u)   ? '<span class="tag tag--ban">제한</span>'   : "") +
+                 (ADM.dummy  ? '<span class="tag tag--test">더미</span>'  : "");
+
+    const label = document.createElement("div");
+    label.className = "row__label";
+    label.innerHTML =
+      '<span style="font-weight:550">' + escapeHtml(shortName(u)) + '</span>' + tags +
+      '<span class="row__sub">코드 ' + escapeHtml(String(u.code || "—")) + ' · ' +
+      escapeHtml(fmtDur(u.total_seconds || 0)) +
+      (banOn(u) ? ' · ' + escapeHtml(banStateText(u, true)) : "") + '</span>';
+
+    const pts = document.createElement("div");
+    pts.className = "log__p num";
+    pts.textContent = (u.points || 0) + "P";
+
+    row.appendChild(av); row.appendChild(label); row.appendChild(pts);
+    row.addEventListener("click", function(){ openAdminUser(u); });
+    box.appendChild(row);
+  });
+}
+
+/* ── 회원 한 명 관리 모달 ── */
+function openAdminUser(u){
+  const wrap = document.createElement("div");
+  wrap.setAttribute("data-no-swipe", "");
+  const h = openModal({
+    title: shortName(u),
+    desc: "회원 코드 " + String(u.code || "—") + (u.is_admin ? " · 관리자" : "") + (ADM.dummy ? " · 더미 데이터" : ""),
+    body: wrap,
+    actions: [{ label:"닫기", variant:"ghost" }]
+  });
+  drawAdminPanel(wrap, u, h);
+}
+
+function drawAdminPanel(wrap, u, h){
+  wrap.innerHTML = "";
+
+  const now = document.createElement("div");
+  now.className = "notice";
+  now.innerHTML =
+    "포인트 <b>" + (u.points || 0) + "P</b> · 총 " + escapeHtml(fmtDur(u.total_seconds || 0)) +
+    " · 기록 " + (u.session_count || 0) + "회" +
+    (banOn(u)
+      ? '<br/><span style="color:var(--danger)">' + escapeHtml(banStateText(u)) +
+        (u.ban_reason ? " · 사유 " + escapeHtml(String(u.ban_reason).slice(0, 80)) : "") + '</span>'
+      : "");
+  wrap.appendChild(now);
+
+  /* 포인트 주기 */
+  const h1 = document.createElement("div");
+  h1.className = "admhead";
+  h1.innerHTML = '포인트 주기<span class="admnow">지금 ' + (u.points || 0) + 'P</span>';
+  wrap.appendChild(h1);
+
+  const box1 = document.createElement("div");
+  box1.className = "admbox";
+  GRANT_STEPS.forEach(function(n){
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "year"; b.textContent = "+" + n;
+    b.addEventListener("click", function(){ admGrant(u, n, wrap, h); });
+    box1.appendChild(b);
+  });
+  const bx = document.createElement("button");
+  bx.type = "button"; bx.className = "year"; bx.textContent = "직접";
+  bx.addEventListener("click", async function(){
+    const n = await askPoints(shortName(u));
+    if (n) admGrant(u, n, wrap, h);
+  });
+  box1.appendChild(bx);
+  wrap.appendChild(box1);
+
+  /* 이용 제한 */
+  const h2 = document.createElement("div");
+  h2.className = "admhead";
+  h2.textContent = "이용 제한";
+  wrap.appendChild(h2);
+
+  if (u.is_admin){
+    const p = document.createElement("p");
+    p.className = "seg__note";
+    p.textContent = "관리자는 제한할 수 없습니다. 먼저 관리자에서 내려야 합니다.";
+    wrap.appendChild(p);
+    return;
+  }
+
+  if (banOn(u)){
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "btn btn--primary btn--block";
+    b.textContent = "제한 풀기";
+    b.addEventListener("click", function(){ admUnban(u, wrap, h); });
+    wrap.appendChild(b);
+    const p = document.createElement("p");
+    p.className = "seg__note";
+    p.textContent = "풀면 그 회원이 다음에 들어올 때 “앞으로는 규칙을 지켜주세요” 안내가 한 번 보입니다.";
+    wrap.appendChild(p);
+    return;
+  }
+
+  const reason = document.createElement("input");
+  reason.className = "input";
+  reason.type = "text";
+  reason.maxLength = 80;
+  reason.placeholder = "사유 (본인에게 보입니다 · 비워도 됩니다)";
+  reason.autocomplete = "off";
+  wrap.appendChild(reason);
+
+  const box2 = document.createElement("div");
+  box2.className = "admbox";
+  box2.style.marginTop = "9px";
+  BAN_DAYS.forEach(function(d){
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "year"; b.textContent = d + "일";
+    b.addEventListener("click", function(){ admBan(u, d, reason.value, wrap, h); });
+    box2.appendChild(b);
+  });
+  const bp = document.createElement("button");
+  bp.type = "button"; bp.className = "year"; bp.textContent = "영구";
+  bp.addEventListener("click", function(){ admBan(u, 3650, reason.value, wrap, h); });
+  box2.appendChild(bp);
+  wrap.appendChild(box2);
+
+  const p2 = document.createElement("p");
+  p2.className = "seg__note";
+  p2.textContent = "1일부터 70일까지 고를 수 있고, 그보다 길면 영구 제한입니다. " +
+                   "제한된 회원은 로그인해도 화면이 잠기고 기록 저장·상점 구매가 되지 않습니다.";
+  wrap.appendChild(p2);
+}
+
+/* 포인트를 직접 적어 넣는 작은 모달 */
+function askPoints(name){
+  return new Promise(function(resolve){
+    const wrap = document.createElement("div");
+    wrap.setAttribute("data-no-swipe", "");
+    const inp = document.createElement("input");
+    inp.className = "input";
+    inp.type = "text";
+    inp.inputMode = "numeric";
+    inp.autocomplete = "off";
+    inp.placeholder = "예: 50 · 되돌리려면 -50";
+    wrap.appendChild(inp);
+
+    let done = false;
+    openModal({
+      title: "포인트 직접 넣기",
+      desc: name + " 님에게 줄 포인트를 적어주세요. 앞에 - 를 붙이면 도로 거둡니다.",
+      body: wrap,
+      onClose: function(){ if (!done) resolve(null); },
+      actions: [
+        { label:"취소", variant:"ghost" },
+        { label:"주기", variant:"primary", onClick: function(){
+            const n = parseInt(String(inp.value).replace(/[^0-9-]/g, ""), 10);
+            if (!n || isNaN(n)){ toast("숫자를 적어주세요."); return false; }
+            if (Math.abs(n) > 100000){ toast("한 번에 100,000점까지만 됩니다."); return false; }
+            done = true; resolve(n);
+          } }
+      ]
+    });
+    setTimeout(function(){ try { inp.focus(); } catch (e) {} }, 60);
+  });
+}
+
+async function admGrant(u, amount, wrap, h){
+  if (!ADM.is) return;
+  const sign = amount > 0 ? "+" + amount : String(amount);
+
+  if (ADM.dummy){
+    u.points = Math.max(0, (u.points || 0) + amount);
+    toast("더미 데이터입니다 — 화면에서만 <b>" + escapeHtml(sign) + "P</b> 되었습니다.");
+    drawAdminPanel(wrap, u, h); renderAdminList();
+    return;
+  }
+  if (S.busy) return;
+  S.busy = true;
+  let res = null, err = null;
+  try {
+    const r = await S.sb.rpc("sr_admin_grant", { p_target: u.id, p_points: amount });
+    res = r.data; err = r.error;
+  } catch (e) { err = e; }
+  S.busy = false;
+
+  if (err || !res){
+    await alertModal("포인트를 주지 못했습니다", admErr(err));
+    return;
+  }
+  u.points = res.points;
+  if (S.user && u.id === S.user.id && S.profile){
+    S.profile.points = res.points;
+    paintProfile(); renderShop(); renderAchievements();
+  }
+  toast(escapeHtml(shortName(u)) + " 님 <b>" + escapeHtml(sign) + "P</b> · 지금 " + res.points + "P");
+  drawAdminPanel(wrap, u, h);
+  renderAdminList();
+}
+
+async function admBan(u, days, reason, wrap, h){
+  if (!ADM.is) return;
+  const perm = days > 70;
+  const why  = String(reason || "").trim().slice(0, 80);
+
+  const ok = await confirmModal(
+    perm ? "영구히 제한할까요?" : days + "일 동안 제한할까요?",
+    shortName(u) + " 님은 " + (perm ? "앞으로 계속" : days + "일 동안") + " 자리를 쓸 수 없습니다. " +
+    "타이머 기록과 상점 구매가 막히고, 로그인하면 제한 안내만 보입니다.",
+    "제한하기", true);
+  if (!ok) return;
+
+  if (ADM.dummy){
+    u.banned_until = perm ? "9999-12-31T00:00:00+00:00"
+                          : new Date(Date.now() + days * 86400000).toISOString();
+    u.ban_reason = why || null;
+    toast("더미 데이터입니다 — 서버에는 아무것도 보내지 않았습니다.");
+    drawAdminPanel(wrap, u, h); renderAdminList();
+    return;
+  }
+  if (S.busy) return;
+  S.busy = true;
+  let res = null, err = null;
+  try {
+    const r = await S.sb.rpc("sr_admin_ban", { p_target: u.id, p_days: days, p_reason: why || null });
+    res = r.data; err = r.error;
+  } catch (e) { err = e; }
+  S.busy = false;
+
+  if (err || !res){
+    await alertModal("제한하지 못했습니다", admErr(err));
+    return;
+  }
+  u.banned_until = res.until;
+  u.ban_reason = why || null;
+  toast(escapeHtml(shortName(u)) + " 님을 " + (res.permanent ? "영구" : days + "일") + " 제한했습니다.");
+  drawAdminPanel(wrap, u, h);
+  renderAdminList();
+}
+
+async function admUnban(u, wrap, h){
+  if (!ADM.is) return;
+  const ok = await confirmModal("제한을 풀까요?",
+    shortName(u) + " 님이 바로 다시 자리를 쓸 수 있게 됩니다.", "풀기");
+  if (!ok) return;
+
+  if (ADM.dummy){
+    u.banned_until = null; u.ban_reason = null;
+    toast("더미 데이터입니다 — 서버에는 아무것도 보내지 않았습니다.");
+    drawAdminPanel(wrap, u, h); renderAdminList();
+    return;
+  }
+  if (S.busy) return;
+  S.busy = true;
+  let res = null, err = null;
+  try {
+    const r = await S.sb.rpc("sr_admin_unban", { p_target: u.id });
+    res = r.data; err = r.error;
+  } catch (e) { err = e; }
+  S.busy = false;
+
+  if (err || !res){
+    await alertModal("제한을 풀지 못했습니다", admErr(err));
+    return;
+  }
+  u.banned_until = new Date(Date.now() - 1000).toISOString();
+  u.ban_reason = null;
+  toast(escapeHtml(shortName(u)) + " 님의 제한을 풀었습니다.");
+  drawAdminPanel(wrap, u, h);
+  renderAdminList();
+}
+
+function initAdminUI(){
+  const q = $("#admQ");
+  if (q) q.addEventListener("input", function(){
+    clearTimeout(ADM.qTimer);
+    ADM.qTimer = setTimeout(loadAdminUsers, 280);
+  });
+
+  const d = $("#btnDummy");
+  if (d) d.addEventListener("click", function(){
+    ADM.dummy = !ADM.dummy;
+    d.setAttribute("aria-checked", String(ADM.dummy));
+    if (ADM.dummy && !ADM.dummyList) ADM.dummyList = makeDummy();
+    loadAdminUsers();
+  });
+
+  const out = $("#btnBanOut");
+  if (out) out.addEventListener("click", async function(){
+    try { localStorage.removeItem(LS.timer); } catch (e) {}
+    try { await S.sb.auth.signOut(); } catch (e) {}
+    location.reload();
+  });
+}
+
 function renderAll(){
   applyCosmetics();
   paintGoal();
@@ -4415,6 +5010,7 @@ function bindUI(){
   $("#calToday").addEventListener("click", calGoToday);
   $("#btnSimple").addEventListener("click", function(){ applySimple(!S.simple); });
   initCharts();
+  initAdminUI();
 
   $("#btnGoogle").addEventListener("click", signInGoogle);
   $("#btnGatePrivacy").addEventListener("click", openPrivacyModal);
@@ -4521,6 +5117,11 @@ async function handleSession(session){
   await ensureProfile(S.user);
   loadGoal();
   paintProfile();
+
+  /* 이용이 제한된 계정이면 여기서 화면을 잠그고 끝냅니다. */
+  if (!(await checkBan())) return;
+
+  await checkAdmin();
 
   /* 만 14세 미만 확인 — 출생 년도가 없으면 여기서 반드시 묻습니다. */
   if (!(await checkAge())) return;
