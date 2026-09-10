@@ -62,6 +62,11 @@
       1) <section class="view" data-view="이름"> 를 <main> 안에 추가
       2) 사이드바 <nav> 에 data-go="이름" 버튼 추가
       3) VIEW_TITLE 객체에 제목 추가
+
+  · 새로 넣는 기능이 '있으면 좋은' 부가 기능이라면
+      그 <div class="section"> 에 data-extra 를 붙이세요.
+      설정의 '기능 단순화' 를 켜면 data-extra 가 붙은 것만 한꺼번에 숨습니다.
+      (타이머·기록·순위처럼 앱의 뼈대인 것에는 붙이지 마세요)
 ================================================================================
 -->
 
@@ -364,6 +369,22 @@ button.row:hover{ background:var(--surface-2); }
   font-size:.86rem; font-weight:550; color:var(--muted);
   transition:background .16s ease, color .16s ease;
 }
+/* 켜기/끄기 스위치 */
+.switch{
+  position:relative; flex:0 0 auto;
+  width:44px; height:26px; border-radius:99px;
+  background:var(--surface-2); border:1px solid var(--line);
+  transition:background .18s ease, border-color .18s ease;
+}
+.switch__dot{
+  position:absolute; top:2px; left:2px;
+  width:20px; height:20px; border-radius:50%;
+  background:var(--muted);
+  transition:transform .18s var(--ease), background .18s ease;
+}
+[role="switch"][aria-checked="true"] .switch{ background:var(--accent); border-color:var(--accent); }
+[role="switch"][aria-checked="true"] .switch__dot{ transform:translateX(18px); background:var(--accent-ink); }
+
 .seg__note{ margin-top:10px; font-size:.75rem; color:var(--muted); line-height:1.6; }
 .seg__note b{ color:var(--text-dim); font-weight:600; }
 .seg__opt[aria-pressed="true"]{ background:var(--surface); color:var(--text); }
@@ -786,7 +807,7 @@ button.row:hover{ background:var(--surface-2); }
           <div class="rows" id="recentList"><div class="empty">첫 기록을 남겨보세요.</div></div>
         </div>
 
-        <div class="section">
+        <div class="section" data-extra>
           <div class="section__head">
             <h2 class="section__title">오늘의 목표</h2>
             <button class="section__note" id="btnGoal">목표 바꾸기</button>
@@ -906,6 +927,13 @@ button.row:hover{ background:var(--surface-2); }
             <button class="seg__opt" data-theme-set="system" aria-pressed="false">시스템</button>
           </div>
           <p class="seg__note">앱 안에서 열리는 브라우저(카카오톡 등)는 휴대폰의 다크 모드를 알려주지 않는 경우가 있습니다. 휴대폰을 다크로 해도 밝게 보이면 <b>다크</b>를 직접 골라주세요. 한 번 고르면 계속 유지됩니다.</p>
+
+          <div class="rows" style="margin-top:16px">
+            <button class="row" id="btnSimple" role="switch" aria-checked="false">
+              <span class="row__label">기능 단순화<span class="row__sub">오늘의 목표처럼 곁들인 기능을 숨기고 타이머와 기록만 남깁니다</span></span>
+              <span class="switch" aria-hidden="true"><span class="switch__dot"></span></span>
+            </button>
+          </div>
         </div>
 
         <div class="section">
@@ -1198,11 +1226,19 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.0.8"
+  VERSION:       "1.0.9"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.0.9",
+    d: "2026-09-10",
+    items: [
+      "설정에 '기능 단순화' 를 넣었습니다. 켜면 오늘의 목표처럼 곁들인 기능이 숨고 타이머와 기록만 남습니다.",
+      "기본값은 꺼짐입니다. 앞으로 새로 들어오는 곁들인 기능도 이 스위치 하나로 함께 숨습니다."
+    ]
+  },
   {
     v: "1.0.8",
     d: "2026-09-10",
@@ -1304,7 +1340,7 @@ const VIEW_TITLE = {
   profile:"프로필", privacy:"개인정보 처리방침", settings:"설정"
 };
 
-const LS = { theme:"jari.theme", timer:"jari.timer", view:"jari.view", chart:"jari.chart", goal:"jari.goal" };
+const LS = { theme:"jari.theme", timer:"jari.timer", view:"jari.view", chart:"jari.chart", goal:"jari.goal", simple:"jari.simple" };
 
 /* ===================== [2] 상태 ===================== */
 const S = {
@@ -1316,6 +1352,7 @@ const S = {
   prevView: "settings",
   chart: "bar",          // 최근 7일 그래프 보기 방식
   goal: CONFIG.GOAL_DEFAULT,   // 오늘의 목표 (초). 0 이면 쓰지 않음
+  simple: false,         // 기능 단순화 — 켜면 data-extra 가 붙은 칸을 숨깁니다
   ready: false,
   timer: { running:false, startedAt:null, accumulated:0, seenAt:0 }, // ms 기준
   tickId: null,
@@ -2500,6 +2537,21 @@ function renderRecent(){
   list.forEach(function(s){ box.appendChild(sessionRow(s)); });
 }
 
+/* ── 기능 단순화 ─────────────────────────────────────────
+   켜면 data-extra 가 붙은 칸(지금은 '오늘의 목표')이 숨습니다.
+   앞으로 부가 기능을 넣을 때 그 칸에 data-extra 만 붙이면 함께 숨습니다.
+   기본값은 꺼짐이고, 이 기기에만 저장됩니다(테마·그래프 설정과 같습니다). */
+function loadSimple(){
+  try { S.simple = localStorage.getItem(LS.simple) === "1"; } catch (e) { S.simple = false; }
+}
+function applySimple(on){
+  S.simple = !!on;
+  try { localStorage.setItem(LS.simple, S.simple ? "1" : "0"); } catch (e) {}
+  $$("[data-extra]").forEach(function(el){ el.hidden = S.simple; });
+  const b = $("#btnSimple");
+  if (b) b.setAttribute("aria-checked", String(S.simple));
+}
+
 /* ── 오늘의 목표 ─────────────────────────────────────────
    목표는 프로필(sr_profiles.daily_goal_seconds)에 저장해 기기가 바뀌어도
    따라옵니다. 저장에 실패하면 이 기기에만이라도 남도록 localStorage 에 적어둡니다.
@@ -3201,6 +3253,7 @@ function bindUI(){
   $("#btnLogout").addEventListener("click", signOut);
 
   $("#btnGoal").addEventListener("click", openGoalModal);
+  $("#btnSimple").addEventListener("click", function(){ applySimple(!S.simple); });
   $("#btnChartMode").addEventListener("click", openChartModal);
 
   $("#btnGoogle").addEventListener("click", signInGoogle);
@@ -3255,6 +3308,7 @@ async function boot(){
     if (saved) S.chart = saved;
   } catch (e) {}
   safe("theme", initTheme);
+  safe("simple", function(){ loadSimple(); applySimple(S.simple); });
   safe("nav", initNav);
   safe("routing", initRouting);
   safe("ui", bindUI);
