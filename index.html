@@ -396,9 +396,12 @@ html[data-tree="night"]{ --leaf:#4E7CA8; }
 .tree__next{ margin-left:auto; font-size:.75rem; color:var(--muted); font-variant-numeric:tabular-nums; }
 
 /* ── 공부 캘린더 ── */
-.cal{ display:flex; gap:3px; overflow:hidden; }
-.cal__wk{ display:flex; flex-direction:column; gap:3px; flex:1 1 0; min-width:0; }
-.cal__d{ width:100%; aspect-ratio:1/1; border-radius:3px; background:var(--surface-2); padding:0; }
+.cal{ display:flex; gap:4px; overflow:hidden; }
+.cal__months{ display:flex; gap:4px; margin-bottom:6px; }
+.cal__m{ flex:1 1 0; min-width:0; font-size:.66rem; color:var(--muted); white-space:nowrap; }
+.cal__wk{ display:flex; flex-direction:column; gap:4px; flex:1 1 0; min-width:0; }
+.cal__d{ width:100%; aspect-ratio:1/1; border-radius:5px; background:var(--surface-2); padding:0; transition:transform .12s ease; }
+.cal__d:active{ transform:scale(.9); }
 .cal__d.is-out{ opacity:.35; }
 .cal__d.is-today{ box-shadow:0 0 0 2px var(--accent); }
 .cal__d.is-sel{ box-shadow:0 0 0 2px var(--text); }
@@ -407,7 +410,7 @@ html[data-tree="night"]{ --leaf:#4E7CA8; }
 .cal__d--3{ background:var(--c6); }
 .cal__d--4{ background:var(--c7); }
 .cal__legend{ display:flex; align-items:center; justify-content:flex-end; gap:4px; margin-top:9px; font-size:.7rem; color:var(--muted); }
-.cal__c{ width:10px; height:10px; border-radius:3px; background:var(--surface-2); }
+.cal__c{ width:11px; height:11px; border-radius:4px; background:var(--surface-2); }
 .cal__c--1{ background:var(--c2); } .cal__c--2{ background:var(--c4); }
 .cal__c--3{ background:var(--c6); } .cal__c--4{ background:var(--c7); }
 .cal__legend span:first-child{ margin-right:2px; }
@@ -719,10 +722,18 @@ button.srow:hover .srow__n{ color:var(--text); }
   .table-wrap:has(th:nth-child(4)) table{ min-width:420px; }
 }
 
-.rel__ver{ display:flex; align-items:baseline; gap:9px; }
+.rel__ver{
+  display:flex; align-items:baseline; gap:9px; width:100%;
+  padding:4px 0; border-radius:9px; text-align:left;
+}
+.rel__ver:hover .rel__n{ color:var(--accent); }
 .rel__n{ font-size:.92rem; font-weight:650; }
 .rel__d{ font-size:.75rem; color:var(--muted); }
-.rel__list{ margin:8px 0 0; padding-left:1.05em; font-size:.84rem; color:var(--text-dim); }
+.rel__cnt{ margin-left:auto; font-size:.73rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+.rel__chev{ width:16px; height:16px; flex:0 0 auto; color:var(--muted); align-self:center; transition:transform .18s var(--ease); }
+.rel__ver[aria-expanded="true"] .rel__chev{ transform:rotate(180deg); }
+.rel__ver[aria-expanded="true"] .rel__cnt{ opacity:0; }
+.rel__list{ margin:10px 0 2px; padding-left:1.05em; font-size:.84rem; color:var(--text-dim); }
 .rel__list li + li{ margin-top:4px; }
 
 /* ===================== [C8] 로그인 게이트 / 모달 / 토스트 ===================== */
@@ -1429,11 +1440,19 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.2.0"
+  VERSION:       "1.2.1"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.2.1",
+    d: "2026-09-10",
+    items: [
+      "공부 캘린더 칸을 두 배 가까이 키웠습니다. 손가락으로 누르기 쉬워졌고, 위에 달 이름도 붙었습니다.",
+      "업데이트 내역은 이제 가장 최신 것만 펼쳐 둡니다. 예전 것은 버전을 누르면 펼쳐집니다."
+    ]
+  },
   {
     v: "1.2.0",
     d: "2026-09-10",
@@ -3847,8 +3866,11 @@ function renderCalendar(){
   const read = $("#calRead"), note = $("#calNote");
   const day = dayTotals();
 
+  /* 칸이 손가락으로 누를 만한 크기가 되도록 주 수를 정합니다.
+     한 칸을 약 22px 로 잡고, 화면이 넓으면 더 많은 주를 보여줍니다. */
   const w = Math.max(180, Math.round(grid.clientWidth || 300));
-  const weeks = Math.max(10, Math.min(26, Math.floor((w + 3) / 15)));
+  const GAP = 4, CELL = 22;
+  const weeks = Math.max(8, Math.min(18, Math.floor((w + GAP) / (CELL + GAP))));
   if (note) note.textContent = "최근 " + weeks + "주";
 
   const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -3858,8 +3880,19 @@ function renderCalendar(){
   start.setDate(start.getDate() - (weeks * 7 - 1));      // 그 주의 일요일부터
 
   grid.innerHTML = "";
+  const months = document.createElement("div");
+  months.className = "cal__months";
   const cur = new Date(start);
+  let lastMonth = -1;
   for (let x = 0; x < weeks; x++){
+    const m = document.createElement("span");
+    m.className = "cal__m";
+    /* 그 주에 달이 바뀌면 달 이름을 적습니다. */
+    const mm = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + 6).getMonth();
+    m.textContent = (mm !== lastMonth) ? ((mm + 1) + "월") : "";
+    lastMonth = mm;
+    months.appendChild(m);
+
     const col = document.createElement("div");
     col.className = "cal__wk";
     for (let y = 0; y < 7; y++){
@@ -3885,6 +3918,10 @@ function renderCalendar(){
     }
     grid.appendChild(col);
   }
+  const wrapEl = grid.parentNode;
+  const old = $(".cal__months", wrapEl);
+  if (old) old.remove();
+  wrapEl.insertBefore(months, grid);
 
   let days = 0, sum = 0;
   Object.keys(day).forEach(function(k){
@@ -4099,25 +4136,43 @@ function openPrivacyModal(){
   openModal({ title:"개인정보 처리방침", body:wrap, actions:[{ label:"확인", variant:"primary" }] });
 }
 
+/* 맨 위(가장 최신) 하나만 펼쳐두고, 나머지는 버전을 누르면 펼쳐집니다. */
 function renderChangelog(){
   const box = $("#changelog");
   box.innerHTML = "";
   $("#verNow").textContent = "v" + CONFIG.VERSION;
-  CHANGELOG.forEach(function(rel){
+  CHANGELOG.forEach(function(rel, i){
+    const open = (i === 0);
     const el = document.createElement("div");
-    el.className = "row";
+    el.className = "row rel";
     el.style.flexDirection = "column";
     el.style.alignItems = "stretch";
-    const head = document.createElement("div");
+
+    const head = document.createElement("button");
+    head.type = "button";
     head.className = "rel__ver";
-    head.innerHTML = '<span class="rel__n">v' + escapeHtml(rel.v) + '</span><span class="rel__d">' + escapeHtml(rel.d) + '</span>';
+    head.setAttribute("aria-expanded", String(open));
+    head.innerHTML =
+      '<span class="rel__n">v' + escapeHtml(rel.v) + '</span>' +
+      '<span class="rel__d">' + escapeHtml(rel.d) + '</span>' +
+      '<span class="rel__cnt">' + rel.items.length + '개</span>' +
+      '<svg class="rel__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+
     const ul = document.createElement("ul");
     ul.className = "rel__list";
+    ul.hidden = !open;
     rel.items.forEach(function(t){
       const li = document.createElement("li");
       li.textContent = t;
       ul.appendChild(li);
     });
+
+    head.addEventListener("click", function(){
+      const now = ul.hidden;
+      ul.hidden = !now;
+      head.setAttribute("aria-expanded", String(now));
+    });
+
     el.appendChild(head);
     el.appendChild(ul);
     box.appendChild(el);
