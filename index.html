@@ -870,6 +870,8 @@ button.srow:hover .srow__n{ color:var(--text); }
 }
 .year:hover{ background:var(--line-soft); color:var(--text); }
 .year[aria-pressed="true"]{ background:var(--accent); color:var(--accent-ink); font-weight:650; }
+.year:disabled{ opacity:.38; pointer-events:none; }
+.year--minus{ color:var(--danger); }
 
 .pickbox{ display:flex; flex-direction:column; align-items:center; gap:14px; padding:8px 0 12px; }
 .pickbox .avatar{ width:112px; height:112px; font-size:2.4rem; }
@@ -1560,11 +1562,20 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.3.0"
+  VERSION:       "1.3.1"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.3.1",
+    d: "2026-09-10",
+    items: [
+      "관리자 설정에서 포인트를 뺄 수도 있습니다. −10 · −30 · −50 · −100 · −300 과 ‘0으로’ 가 있고, 뺄 때는 한 번 더 묻습니다.",
+      "포인트는 0P 아래로 내려가지 않습니다. 서버에서도 같이 막습니다.",
+      "‘직접’ 에 -50 처럼 적으면 원하는 만큼 뺄 수 있습니다."
+    ]
+  },
   {
     v: "1.3.0",
     d: "2026-09-10",
@@ -4733,10 +4744,12 @@ function drawAdminPanel(wrap, u, h){
       : "");
   wrap.appendChild(now);
 
+  const have = u.points || 0;
+
   /* 포인트 주기 */
   const h1 = document.createElement("div");
   h1.className = "admhead";
-  h1.innerHTML = '포인트 주기<span class="admnow">지금 ' + (u.points || 0) + 'P</span>';
+  h1.innerHTML = '포인트 주기<span class="admnow">지금 ' + have + 'P</span>';
   wrap.appendChild(h1);
 
   const box1 = document.createElement("div");
@@ -4750,11 +4763,38 @@ function drawAdminPanel(wrap, u, h){
   const bx = document.createElement("button");
   bx.type = "button"; bx.className = "year"; bx.textContent = "직접";
   bx.addEventListener("click", async function(){
-    const n = await askPoints(shortName(u));
+    const n = await askPoints(shortName(u), have);
     if (n) admGrant(u, n, wrap, h);
   });
   box1.appendChild(bx);
   wrap.appendChild(box1);
+
+  /* 포인트 차감 — 0 아래로는 내려가지 않습니다(서버에서도 막습니다). */
+  const h1b = document.createElement("div");
+  h1b.className = "admhead";
+  h1b.innerHTML = '포인트 차감' + (have <= 0 ? '<span class="admnow">뺄 포인트가 없습니다</span>' : '');
+  wrap.appendChild(h1b);
+
+  const box1b = document.createElement("div");
+  box1b.className = "admbox";
+  GRANT_STEPS.forEach(function(n){
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "year year--minus"; b.textContent = "−" + n;
+    b.disabled = have <= 0;
+    b.addEventListener("click", function(){ admGrant(u, -n, wrap, h); });
+    box1b.appendChild(b);
+  });
+  const bz = document.createElement("button");
+  bz.type = "button"; bz.className = "year year--minus"; bz.textContent = "0으로";
+  bz.disabled = have <= 0;
+  bz.addEventListener("click", function(){ admGrant(u, Math.max(-100000, -have), wrap, h); });
+  box1b.appendChild(bz);
+  wrap.appendChild(box1b);
+
+  const p1 = document.createElement("p");
+  p1.className = "seg__note";
+  p1.textContent = "차감은 0P 아래로 내려가지 않습니다. 더 세밀하게 넣으려면 ‘직접’ 에 -50 처럼 적으면 됩니다.";
+  wrap.appendChild(p1);
 
   /* 이용 제한 */
   const h2 = document.createElement("div");
@@ -4814,7 +4854,7 @@ function drawAdminPanel(wrap, u, h){
 }
 
 /* 포인트를 직접 적어 넣는 작은 모달 */
-function askPoints(name){
+function askPoints(name, have){
   return new Promise(function(resolve){
     const wrap = document.createElement("div");
     wrap.setAttribute("data-no-swipe", "");
@@ -4829,12 +4869,13 @@ function askPoints(name){
     let done = false;
     openModal({
       title: "포인트 직접 넣기",
-      desc: name + " 님에게 줄 포인트를 적어주세요. 앞에 - 를 붙이면 도로 거둡니다.",
+      desc: name + " 님에게 줄 포인트를 적어주세요. 앞에 - 를 붙이면 그만큼 뺍니다." +
+            (typeof have === "number" ? " 지금 " + have + "P 를 가지고 있습니다." : ""),
       body: wrap,
       onClose: function(){ if (!done) resolve(null); },
       actions: [
         { label:"취소", variant:"ghost" },
-        { label:"주기", variant:"primary", onClick: function(){
+        { label:"넣기", variant:"primary", onClick: function(){
             const n = parseInt(String(inp.value).replace(/[^0-9-]/g, ""), 10);
             if (!n || isNaN(n)){ toast("숫자를 적어주세요."); return false; }
             if (Math.abs(n) > 100000){ toast("한 번에 100,000점까지만 됩니다."); return false; }
@@ -4848,11 +4889,22 @@ function askPoints(name){
 
 async function admGrant(u, amount, wrap, h){
   if (!ADM.is) return;
-  const sign = amount > 0 ? "+" + amount : String(amount);
+  const sign = amount > 0 ? "+" + amount : "−" + Math.abs(amount);
+
+  /* 주는 건 바로, 빼는 건 한 번 더 묻습니다. */
+  if (amount < 0){
+    const have = u.points || 0;
+    const ok = await confirmModal("포인트를 뺄까요?",
+      shortName(u) + " 님의 포인트에서 " + Math.abs(amount) + "P 를 뺍니다. " +
+      "지금 " + have + "P 이고, 빼고 나면 " + Math.max(0, have + amount) + "P 가 됩니다. " +
+      "0P 아래로는 내려가지 않습니다.",
+      "차감하기", true);
+    if (!ok) return;
+  }
 
   if (ADM.dummy){
     u.points = Math.max(0, (u.points || 0) + amount);
-    toast("더미 데이터입니다 — 화면에서만 <b>" + escapeHtml(sign) + "P</b> 되었습니다.");
+    toast("더미 데이터입니다 — 화면에서만 <b>" + escapeHtml(sign) + "P</b> 되었습니다. 지금 " + u.points + "P");
     drawAdminPanel(wrap, u, h); renderAdminList();
     return;
   }
@@ -4866,7 +4918,7 @@ async function admGrant(u, amount, wrap, h){
   S.busy = false;
 
   if (err || !res){
-    await alertModal("포인트를 주지 못했습니다", admErr(err));
+    await alertModal(amount > 0 ? "포인트를 주지 못했습니다" : "포인트를 빼지 못했습니다", admErr(err));
     return;
   }
   u.points = res.points;
