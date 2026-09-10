@@ -550,6 +550,21 @@ button.row:hover{ background:var(--surface-2); }
 .legend__v{ flex:0 0 auto; color:var(--muted); font-variant-numeric:tabular-nums; }
 .legend__p{ flex:0 0 auto; width:42px; text-align:right; font-variant-numeric:tabular-nums; }
 
+/* 과목별 막대 줄 */
+.srow + .srow{ margin-top:14px; }
+.srow__top{ display:flex; align-items:baseline; gap:10px; }
+.srow__n{ flex:1 1 auto; min-width:0; font-size:.86rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.srow__v{ flex:0 0 auto; font-size:.79rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+.srow__bar{ margin-top:7px; height:6px; border-radius:99px; background:var(--surface-2); }
+.srow__bar span{ display:block; height:100%; min-width:4px; border-radius:99px; background:var(--accent); transition:width .5s var(--ease); }
+/* '그 외' 는 여러 과목을 묶은 것이라, 한 과목처럼 보이지 않게 흐리게 둡니다. */
+.srow.is-rest .srow__n,
+.srow.is-rest .srow__v{ color:var(--muted); }
+.srow.is-rest .srow__bar span{ background:var(--line); }
+
+/* 최고 기록 줄 */
+.best__v{ flex:0 0 auto; font-size:.92rem; font-weight:650; font-variant-numeric:tabular-nums; }
+
 /* 보기 방식 고르기 */
 .opts{ display:flex; flex-direction:column; gap:7px; padding:2px 0 10px; }
 .opt{
@@ -855,6 +870,33 @@ button.row:hover{ background:var(--surface-2); }
         <div class="section">
           <div class="section__head"><h2 class="section__title">기록</h2></div>
           <div class="rows" id="logList"><div class="empty">아직 기록이 없습니다.</div></div>
+        </div>
+
+        <div class="section" data-extra>
+          <div class="section__head">
+            <h2 class="section__title">과목별 시간</h2>
+            <span class="section__note" id="subjNote"></span>
+          </div>
+          <div class="card" id="subjCard"></div>
+        </div>
+
+        <div class="section" data-extra>
+          <div class="section__head">
+            <h2 class="section__title">요일별 그래프</h2>
+            <span class="section__note" id="dowNote"></span>
+          </div>
+          <div class="card">
+            <div class="chart" id="dowChart"></div>
+            <div class="chart__read" id="dowRead">—</div>
+          </div>
+        </div>
+
+        <div class="section" data-extra>
+          <div class="section__head">
+            <h2 class="section__title">최고 기록</h2>
+            <span class="section__note" id="bestNote"></span>
+          </div>
+          <div class="rows" id="bestList"></div>
         </div>
       </section>
 
@@ -1226,11 +1268,21 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.0.9"
+  VERSION:       "1.1.0"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.1.0",
+    d: "2026-09-10",
+    items: [
+      "기록 화면 아래에 과목별 시간이 생겼습니다. 공부 내용에 적은 이름끼리 묶어 많이 한 순서로 보여줍니다.",
+      "요일별 그래프가 생겼습니다. 어느 요일에 많이 앉는지, 그 요일의 하루 평균도 함께 봅니다.",
+      "최고 기록이 생겼습니다. 한 번에 가장 오래, 하루에 가장 오래, 가장 길게 이어간 날을 모아둡니다.",
+      "세 가지 모두 설정의 '기능 단순화' 를 켜면 함께 숨습니다."
+    ]
+  },
   {
     v: "1.0.9",
     d: "2026-09-10",
@@ -2722,6 +2774,220 @@ function renderLog(){
     S.sessions.forEach(function(s){ box.appendChild(sessionRow(s)); });
   }
   renderChart();
+  renderSubjects();
+  renderWeekday();
+  renderBests();
+}
+
+/* ===================== [11-c] 과목별 / 요일별 / 최고 기록 =====================
+   세 칸 모두 data-extra 라서 설정의 '기능 단순화' 를 켜면 함께 숨습니다.
+   계산은 화면에 이미 불러온 S.sessions(최근 200회) 로만 합니다. 서버를 더
+   부르지 않으니 화면을 오갈 때 느려지지 않습니다. */
+
+function isCapped(){ return S.sessions.length >= 200; }   // 200회를 다 채웠으면 '최근 200회' 기준입니다
+function fmtDayKey(key){
+  const p = String(key).split("-");
+  if (p.length !== 3) return key;
+  const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  if (isNaN(d)) return key;
+  return (d.getMonth() + 1) + "월 " + d.getDate() + "일 (" + "일월화수목금토"[d.getDay()] + ")";
+}
+function keyDiffDays(a, b){
+  const pa = String(a).split("-"), pb = String(b).split("-");
+  const ua = Date.UTC(+pa[0], +pa[1] - 1, +pa[2]);
+  const ub = Date.UTC(+pb[0], +pb[1] - 1, +pb[2]);
+  return Math.round((ub - ua) / 86400000);
+}
+/* 하루별 합계 (여러 곳에서 씁니다) */
+function dayTotals(){
+  const map = {};
+  S.sessions.forEach(function(s){
+    const k = dayKey(s.ended_at || s.created_at);
+    if (k) map[k] = (map[k] || 0) + (s.duration_seconds || 0);
+  });
+  return map;
+}
+
+/* ── 과목별 시간 ── */
+function subjectTotals(){
+  const map = {};
+  S.sessions.forEach(function(s){
+    const raw = s.subject == null ? "" : String(s.subject).trim();
+    const name = raw ? raw.slice(0, 24) : "공부";
+    map[name] = (map[name] || 0) + (s.duration_seconds || 0);
+  });
+  return Object.keys(map)
+    .map(function(k){ return { name:k, sec:map[k] }; })
+    .sort(function(a, b){ return b.sec - a.sec; });
+}
+function renderSubjects(){
+  const card = $("#subjCard");
+  if (!card) return;
+  card.innerHTML = "";
+  const note = $("#subjNote");
+  const all = subjectTotals();
+
+  if (!all.length){
+    card.innerHTML = '<div class="chart__empty">아직 기록이 없습니다.</div>';
+    if (note) note.textContent = "";
+    return;
+  }
+
+  /* 너무 많으면 위에서 5개만 두고 나머지는 하나로 묶습니다. */
+  const TOP = 5;
+  let list = all;
+  if (all.length > TOP + 1){
+    let rest = 0;
+    all.slice(TOP).forEach(function(x){ rest += x.sec; });
+    list = all.slice(0, TOP).concat([{ name: "그 외 " + (all.length - TOP) + "가지", sec: rest, rest: true }]);
+  }
+
+  let total = 0, max = 0;
+  all.forEach(function(x){ total += x.sec; });
+  list.forEach(function(x){ if (x.sec > max) max = x.sec; });
+  if (note) note.textContent = (isCapped() ? "최근 200회 · " : "") + "합계 " + fmtDur(total);
+
+  list.forEach(function(x){
+    const row = document.createElement("div");
+    row.className = "srow" + (x.rest ? " is-rest" : "");
+    const pct = total > 0 ? Math.max(1, Math.round(x.sec / total * 100)) : 0;
+    row.innerHTML =
+      '<div class="srow__top">' +
+        '<span class="srow__n">' + escapeHtml(x.name) + '</span>' +
+        '<span class="srow__v">' + escapeHtml(fmtDur(x.sec)) + ' · ' + pct + '%</span>' +
+      '</div>' +
+      '<div class="srow__bar"><span style="width:' + (max > 0 ? Math.max(2, Math.round(x.sec / max * 100)) : 0) + '%"></span></div>';
+    row.title = x.name + " · " + fmtDur(x.sec) + " · 전체의 " + pct + "%";
+    card.appendChild(row);
+  });
+}
+
+/* ── 요일별 그래프 ── */
+function weekdayTotals(){
+  const rows = [];
+  for (let i = 0; i < 7; i++) rows.push({ i:i, label:"일월화수목금토"[i], sec:0, days:{} });
+  S.sessions.forEach(function(s){
+    const raw = s.ended_at || s.created_at;
+    const d = new Date(raw);
+    if (isNaN(d)) return;
+    const r = rows[d.getDay()];
+    r.sec += (s.duration_seconds || 0);
+    r.days[dayKey(d)] = true;
+  });
+  rows.forEach(function(r){ r.count = Object.keys(r.days).length; });
+  return rows;
+}
+function renderWeekday(){
+  const mount = $("#dowChart");
+  if (!mount) return;
+  mount.innerHTML = "";
+  const read = $("#dowRead");
+  const rows = weekdayTotals();
+  const note = $("#dowNote");
+
+  let total = 0, max = 0;
+  rows.forEach(function(r){ total += r.sec; if (r.sec > max) max = r.sec; });
+  if (note) note.textContent = isCapped() ? "최근 200회" : "전체 기록";
+
+  if (total <= 0){
+    mount.innerHTML = '<div class="chart__empty">아직 기록이 없습니다.</div>';
+    if (read) read.textContent = "요일이 쌓이면 어떤 요일에 많이 앉는지 보여드립니다.";
+    return;
+  }
+
+  const today = new Date().getDay();
+  const wrap = document.createElement("div");
+  wrap.className = "bars";
+  rows.forEach(function(r){
+    const col = document.createElement("button");
+    col.type = "button";
+    col.className = "bars__col";
+    const h = r.sec > 0 ? Math.max(8, Math.round(r.sec / max * 100)) : 0;
+    col.innerHTML =
+      '<span class="bars__track"><span class="bars__bar' + (r.sec > 0 ? ' is-on' : '') + '" style="height:' + h + '%"></span></span>' +
+      '<span class="bars__d' + (r.i === today ? ' is-today' : '') + '">' + r.label + '</span>';
+    const label = r.label + "요일 · " + fmtDur(r.sec) + (r.count ? " · " + r.count + "일 앉았습니다" : "");
+    col.title = label;
+    col.setAttribute("aria-label", label);
+    col.addEventListener("click", function(){ readWeekday(r, total); });
+    col.addEventListener("mouseenter", function(){ readWeekday(r, total); });
+    wrap.appendChild(col);
+  });
+  mount.appendChild(wrap);
+
+  /* 가장 많이 앉은 요일을 먼저 보여줍니다. */
+  let top = rows[0];
+  rows.forEach(function(r){ if (r.sec > top.sec) top = r; });
+  readWeekday(top, total);
+}
+function readWeekday(r, total){
+  const read = $("#dowRead");
+  if (!read) return;
+  if (r.sec <= 0){
+    read.innerHTML = "<b>" + r.label + "요일</b> · 기록 없음";
+    return;
+  }
+  const avg = r.count > 0 ? Math.round(r.sec / r.count) : 0;
+  read.innerHTML = "<b>" + r.label + "요일</b> · <i>" + escapeHtml(fmtDur(r.sec)) + "</i>" +
+    (total > 0 ? " · 전체의 <i>" + Math.max(1, Math.round(r.sec / total * 100)) + "%</i>" : "") +
+    (r.count > 0 ? " · 하루 평균 <i>" + escapeHtml(fmtDur(avg)) + "</i>" : "");
+}
+
+/* ── 최고 기록 ── */
+function bestRecords(){
+  const out = { one:null, day:null, streak:null };
+  S.sessions.forEach(function(s){
+    if (!out.one || (s.duration_seconds || 0) > (out.one.duration_seconds || 0)) out.one = s;
+  });
+  const day = dayTotals();
+  const keys = Object.keys(day).sort();
+  keys.forEach(function(k){
+    if (!out.day || day[k] > out.day.sec) out.day = { key:k, sec:day[k] };
+  });
+  /* 가장 길게 이어간 날 */
+  let run = 0, start = null, best = 0, bestStart = null, bestEnd = null, prev = null;
+  keys.forEach(function(k){
+    if (prev !== null && keyDiffDays(prev, k) === 1){ run++; }
+    else { run = 1; start = k; }
+    if (run > best){ best = run; bestStart = start; bestEnd = k; }
+    prev = k;
+  });
+  if (best > 0) out.streak = { days:best, from:bestStart, to:bestEnd };
+  return out;
+}
+function bestRow(label, value, sub){
+  const el = document.createElement("div");
+  el.className = "row";
+  el.innerHTML =
+    '<span class="row__label">' + escapeHtml(label) +
+      (sub ? '<span class="row__sub">' + escapeHtml(sub) + '</span>' : '') + '</span>' +
+    '<span class="best__v num">' + escapeHtml(value) + '</span>';
+  return el;
+}
+function renderBests(){
+  const box = $("#bestList");
+  if (!box) return;
+  box.innerHTML = "";
+  const note = $("#bestNote");
+  if (note) note.textContent = isCapped() ? "최근 200회 기준" : "";
+
+  if (!S.sessions.length){
+    box.innerHTML = '<div class="empty">기록이 쌓이면 최고 기록을 보여드립니다.</div>';
+    return;
+  }
+  const b = bestRecords();
+  if (b.one){
+    box.appendChild(bestRow("한 번에 가장 오래", fmtDur(b.one.duration_seconds),
+      fmtDayKey(dayKey(b.one.ended_at || b.one.created_at)) +
+      (b.one.subject ? " · " + String(b.one.subject).slice(0, 20) : "")));
+  }
+  if (b.day){
+    box.appendChild(bestRow("하루에 가장 오래", fmtDur(b.day.sec), fmtDayKey(b.day.key)));
+  }
+  if (b.streak){
+    box.appendChild(bestRow("가장 길게 이어간 날", b.streak.days + "일",
+      b.streak.days > 1 ? (fmtDayKey(b.streak.from) + " ~ " + fmtDayKey(b.streak.to)) : fmtDayKey(b.streak.to)));
+  }
 }
 
 /* ===================== [11-b] 최근 7일 그래프 ===================== */
