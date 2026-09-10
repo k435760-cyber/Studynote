@@ -396,25 +396,52 @@ html[data-tree="night"]{ --leaf:#4E7CA8; }
 .tree__next{ margin-left:auto; font-size:.75rem; color:var(--muted); font-variant-numeric:tabular-nums; }
 
 /* ── 공부 캘린더 ── */
-.cal{ display:flex; gap:4px; overflow:hidden; }
-.cal__months{ display:flex; gap:4px; margin-bottom:6px; }
-.cal__m{ flex:1 1 0; min-width:0; font-size:.66rem; color:var(--muted); white-space:nowrap; }
-.cal__wk{ display:flex; flex-direction:column; gap:4px; flex:1 1 0; min-width:0; }
-.cal__d{ width:100%; aspect-ratio:1/1; border-radius:5px; background:var(--surface-2); padding:0; transition:transform .12s ease; }
-.cal__d:active{ transform:scale(.9); }
-.cal__d.is-out{ opacity:.35; }
-.cal__d.is-today{ box-shadow:0 0 0 2px var(--accent); }
-.cal__d.is-sel{ box-shadow:0 0 0 2px var(--text); }
-.cal__d--1{ background:var(--c2); }
-.cal__d--2{ background:var(--c4); }
-.cal__d--3{ background:var(--c6); }
-.cal__d--4{ background:var(--c7); }
-.cal__legend{ display:flex; align-items:center; justify-content:flex-end; gap:4px; margin-top:9px; font-size:.7rem; color:var(--muted); }
-.cal__c{ width:11px; height:11px; border-radius:4px; background:var(--surface-2); }
-.cal__c--1{ background:var(--c2); } .cal__c--2{ background:var(--c4); }
-.cal__c--3{ background:var(--c6); } .cal__c--4{ background:var(--c7); }
-.cal__legend span:first-child{ margin-right:2px; }
-.cal__legend span:last-child{ margin-left:2px; }
+/* 달 넘기기 */
+.calnav{ display:flex; align-items:center; gap:2px; margin-left:auto; }
+.calnav__b{
+  width:30px; height:30px; border-radius:9px; display:grid; place-items:center;
+  color:var(--muted); transition:background .16s ease, color .16s ease;
+}
+.calnav__b svg{ width:16px; height:16px; }
+.calnav__b:hover{ background:var(--surface-2); color:var(--text); }
+.calnav__b:disabled{ opacity:.3; pointer-events:none; }
+.calnav__t{ min-width:88px; text-align:center; font-size:.82rem; font-weight:600; }
+
+/* 달력 */
+.cal__dow{ display:grid; grid-template-columns:repeat(7,1fr); margin-bottom:6px; }
+.cal__dow span{ text-align:center; font-size:.7rem; color:var(--muted); }
+.cal__dow span:first-child{ color:var(--danger); }
+.cal{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.day{
+  min-height:50px; padding:5px 3px 4px; border-radius:9px;
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  transition:background .14s ease;
+}
+.day:hover{ background:var(--surface-2); }
+.day__n{ font-size:.74rem; color:var(--text-dim); font-variant-numeric:tabular-nums; line-height:1.2; }
+.day.is-sun .day__n{ color:var(--danger); }
+.day.is-out{ opacity:.32; }
+.day.is-today{ background:var(--surface-2); }
+.day.is-today .day__n{ color:var(--accent); font-weight:700; }
+.day.is-sel{ box-shadow:inset 0 0 0 2px var(--accent); }
+.day__t{
+  width:100%; padding:2px 0 3px; border-radius:6px;
+  font-size:.68rem; font-weight:600; text-align:center;
+  font-variant-numeric:tabular-nums; letter-spacing:-.02em;
+  background:var(--surface-2); color:var(--muted);
+}
+.day__t--1{ background:var(--c2); }
+.day__t--2{ background:var(--c4); }
+.day__t--3{ background:var(--c6); }
+.day__t--4{ background:var(--c7); }
+html[data-theme="light"] .day__t--1{ color:#2A1C08; }
+html[data-theme="light"] .day__t--2,
+html[data-theme="light"] .day__t--3,
+html[data-theme="light"] .day__t--4{ color:#FFF7EC; }
+html[data-theme="dark"] .day__t--1{ color:#F6EFE6; }
+html[data-theme="dark"] .day__t--2,
+html[data-theme="dark"] .day__t--3,
+html[data-theme="dark"] .day__t--4{ color:#241A08; }
 
 /* ── 상점 ── */
 .shop__top{ padding:16px 18px; }
@@ -981,16 +1008,22 @@ button.srow:hover .srow__n{ color:var(--text); }
         <div class="section" data-extra>
           <div class="section__head">
             <h2 class="section__title">공부 캘린더</h2>
-            <span class="section__note num" id="calNote">—</span>
+            <button class="section__note" id="calToday" hidden>오늘</button>
+            <div class="calnav">
+              <button class="calnav__b" id="calPrev" aria-label="이전 달">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+              </button>
+              <span class="calnav__t num" id="calTitle">—</span>
+              <button class="calnav__b" id="calNext" aria-label="다음 달">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+              </button>
+            </div>
           </div>
           <div class="card">
+            <div class="cal__dow"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
             <div class="cal" id="calGrid"></div>
-            <div class="cal__legend">
-              <span>적음</span>
-              <i class="cal__c cal__c--0"></i><i class="cal__c cal__c--1"></i><i class="cal__c cal__c--2"></i><i class="cal__c cal__c--3"></i><i class="cal__c cal__c--4"></i>
-              <span>많음</span>
-            </div>
             <div class="chart__read" id="calRead">—</div>
+            <div class="chart__foot" id="calFoot" hidden></div>
           </div>
         </div>
 
@@ -1440,11 +1473,20 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.2.1"
+  VERSION:       "1.2.2"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.2.2",
+    d: "2026-09-10",
+    items: [
+      "공부 캘린더를 여느 달력처럼 바꿨습니다. 작은 네모가 잔뜩 있던 대신, 날짜와 그날 공부한 시간이 칸마다 적힙니다.",
+      "화살표로 달을 넘기고 '오늘' 을 누르면 이번 달로 돌아옵니다. 기록이 있는 가장 오래된 달까지만 넘어갑니다.",
+      "많이 앉은 날일수록 시간 칸 색이 진해집니다."
+    ]
+  },
   {
     v: "1.2.1",
     d: "2026-09-10",
@@ -3860,77 +3902,102 @@ function calLevel(sec){
   if (sec < 14400) return 3;
   return 4;
 }
+/* 칸에 적을 짧은 시간 (1시간 6분 → 1:06) */
+function fmtHM(sec){
+  const m = Math.round(Math.max(0, sec) / 60);
+  return Math.floor(m / 60) + ":" + pad2(m % 60);
+}
+const CAL = { y:null, m:null, sel:null };   // 지금 보고 있는 달
+
+function calFirstMonth(){
+  /* 불러온 기록 중 가장 오래된 달까지만 넘길 수 있게 합니다. */
+  let oldest = null;
+  S.sessions.forEach(function(s){
+    const k = dayKey(s.ended_at || s.created_at);
+    if (k && (!oldest || k < oldest)) oldest = k;
+  });
+  if (!oldest) return null;
+  const p = oldest.split("-");
+  return { y: +p[0], m: +p[1] - 1 };
+}
+function calShift(step){
+  const d = new Date(CAL.y, CAL.m + step, 1);
+  CAL.y = d.getFullYear(); CAL.m = d.getMonth();
+  CAL.sel = null;
+  renderCalendar();
+}
+function calGoToday(){
+  const n = new Date();
+  CAL.y = n.getFullYear(); CAL.m = n.getMonth(); CAL.sel = null;
+  renderCalendar();
+}
 function renderCalendar(){
   const grid = $("#calGrid");
   if (!grid) return;
-  const read = $("#calRead"), note = $("#calNote");
+  const read = $("#calRead"), foot = $("#calFoot");
   const day = dayTotals();
+  const now = new Date();
+  if (CAL.y === null){ CAL.y = now.getFullYear(); CAL.m = now.getMonth(); }
 
-  /* 칸이 손가락으로 누를 만한 크기가 되도록 주 수를 정합니다.
-     한 칸을 약 22px 로 잡고, 화면이 넓으면 더 많은 주를 보여줍니다. */
-  const w = Math.max(180, Math.round(grid.clientWidth || 300));
-  const GAP = 4, CELL = 22;
-  const weeks = Math.max(8, Math.min(18, Math.floor((w + GAP) / (CELL + GAP))));
-  if (note) note.textContent = "최근 " + weeks + "주";
+  const first = new Date(CAL.y, CAL.m, 1);
+  const last  = new Date(CAL.y, CAL.m + 1, 0);
+  const title = $("#calTitle");
+  if (title) title.textContent = (CAL.y === now.getFullYear() ? "" : CAL.y + "년 ") + (CAL.m + 1) + "월";
 
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const end = new Date(today);
-  end.setDate(end.getDate() + (6 - end.getDay()));      // 이번 주 토요일까지
-  const start = new Date(end);
-  start.setDate(start.getDate() - (weeks * 7 - 1));      // 그 주의 일요일부터
+  /* 넘길 수 있는 범위 */
+  const min = calFirstMonth();
+  const prevB = $("#calPrev"), nextB = $("#calNext"), todayB = $("#calToday");
+  const cursor = CAL.y * 12 + CAL.m;
+  if (prevB) prevB.disabled = !min || cursor <= (min.y * 12 + min.m);
+  if (nextB) nextB.disabled = cursor >= (now.getFullYear() * 12 + now.getMonth());
+  if (todayB) todayB.hidden = (CAL.y === now.getFullYear() && CAL.m === now.getMonth());
+
+  /* 첫 주 일요일부터 마지막 주 토요일까지 그립니다. */
+  const startD = new Date(first);
+  startD.setDate(1 - first.getDay());
+  const endD = new Date(last);
+  endD.setDate(last.getDate() + (6 - last.getDay()));
 
   grid.innerHTML = "";
-  const months = document.createElement("div");
-  months.className = "cal__months";
-  const cur = new Date(start);
-  let lastMonth = -1;
-  for (let x = 0; x < weeks; x++){
-    const m = document.createElement("span");
-    m.className = "cal__m";
-    /* 그 주에 달이 바뀌면 달 이름을 적습니다. */
-    const mm = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + 6).getMonth();
-    m.textContent = (mm !== lastMonth) ? ((mm + 1) + "월") : "";
-    lastMonth = mm;
-    months.appendChild(m);
+  const todayKey = dayKey(now);
+  let monthSec = 0, monthDays = 0;
+  const cur = new Date(startD);
+  while (cur <= endD){
+    const k = dayKey(cur);
+    const sec = day[k] || 0;
+    const inMonth = (cur.getMonth() === CAL.m && cur.getFullYear() === CAL.y);
+    if (inMonth && sec > 0){ monthSec += sec; monthDays++; }
 
-    const col = document.createElement("div");
-    col.className = "cal__wk";
-    for (let y = 0; y < 7; y++){
-      const k = dayKey(cur);
-      const sec = day[k] || 0;
-      const b = document.createElement("button");
-      b.type = "button";
-      const lv = calLevel(sec);
-      b.className = "cal__d cal__d--" + lv +
-        (cur > today ? " is-out" : "") +
-        (k === dayKey(today) ? " is-today" : "");
-      b.dataset.key = k;
-      b.title = fmtDayKey(k) + " · " + (sec > 0 ? fmtDur(sec) : "기록 없음");
-      b.setAttribute("aria-label", b.title);
-      b.addEventListener("click", function(){
-        $$(".cal__d", grid).forEach(function(x2){ x2.classList.remove("is-sel"); });
-        b.classList.add("is-sel");
-        if (read) read.innerHTML = "<b>" + escapeHtml(fmtDayKey(k)) + "</b> · " +
-          (sec > 0 ? "<i>" + escapeHtml(fmtDur(sec)) + "</i>" : "기록 없음");
-      });
-      col.appendChild(b);
-      cur.setDate(cur.getDate() + 1);
-    }
-    grid.appendChild(col);
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "day" +
+      (inMonth ? "" : " is-out") +
+      (cur.getDay() === 0 ? " is-sun" : "") +
+      (k === todayKey ? " is-today" : "") +
+      (k === CAL.sel ? " is-sel" : "");
+    b.innerHTML = '<span class="day__n">' + cur.getDate() + '</span>' +
+      (sec > 0 ? '<span class="day__t day__t--' + calLevel(sec) + '">' + fmtHM(sec) + '</span>' : '');
+    b.title = fmtDayKey(k) + " · " + (sec > 0 ? fmtDur(sec) : "기록 없음");
+    b.setAttribute("aria-label", b.title);
+    b.addEventListener("click", function(){
+      CAL.sel = k;
+      $$(".day", grid).forEach(function(x){ x.classList.remove("is-sel"); });
+      b.classList.add("is-sel");
+      if (read) read.innerHTML = "<b>" + escapeHtml(fmtDayKey(k)) + "</b> · " +
+        (sec > 0 ? "<i>" + escapeHtml(fmtDur(sec)) + "</i>" : "기록 없음");
+    });
+    grid.appendChild(b);
+    cur.setDate(cur.getDate() + 1);
   }
-  const wrapEl = grid.parentNode;
-  const old = $(".cal__months", wrapEl);
-  if (old) old.remove();
-  wrapEl.insertBefore(months, grid);
 
-  let days = 0, sum = 0;
-  Object.keys(day).forEach(function(k){
-    if (k >= dayKey(start) && k <= dayKey(today)){ days++; sum += day[k]; }
-  });
-  if (read){
-    read.innerHTML = days > 0
-      ? ("이 기간에 <b>" + days + "일</b> 앉았습니다 · 모두 <i>" + escapeHtml(fmtDur(sum)) + "</i>")
-      : "칸을 누르면 그날 공부한 시간이 나옵니다.";
+  if (read && !CAL.sel){
+    read.innerHTML = monthDays > 0
+      ? ("이 달에 <b>" + monthDays + "일</b> 앉았습니다 · 모두 <i>" + escapeHtml(fmtDur(monthSec)) + "</i>")
+      : "이 달에는 아직 기록이 없습니다. 날짜를 누르면 그날 시간이 나옵니다.";
+  }
+  if (foot){
+    foot.hidden = !isCapped();
+    foot.textContent = isCapped() ? "최근 200회 기록까지만 표시합니다." : "";
   }
 }
 
@@ -4210,6 +4277,9 @@ function bindUI(){
 
   $("#btnGoal").addEventListener("click", openGoalModal);
   $("#btnTree").addEventListener("click", toggleTree);
+  $("#calPrev").addEventListener("click", function(){ calShift(-1); });
+  $("#calNext").addEventListener("click", function(){ calShift(1); });
+  $("#calToday").addEventListener("click", calGoToday);
   $("#btnSimple").addEventListener("click", function(){ applySimple(!S.simple); });
   initCharts();
 
