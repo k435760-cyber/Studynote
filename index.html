@@ -161,8 +161,13 @@ ul,ol{ padding-left:1.15em; }
 /* ===================== [C3] 앱 셸 ===================== */
 /* 인앱 브라우저(카카오·네이버 등)는 100vh 가 실제로 보이는 높이보다 클 때가 있습니다.
    그래서 높이는 아래 순서로 정해집니다.
-     100vh  →  100dvh(지원 시)  →  --app-h (JS 가 잰 실제 높이, 가장 정확)  */
+     100vh  →  100dvh(지원 시)  →  --app-h (JS 가 잰 실제 높이, 가장 정확)
+
+   position:fixed 로 화면에 못박아 둡니다. 그냥 두면 앱 틀이 문서보다 조금
+   커졌을 때 문서가 밀려 올라가면서 위쪽(상단바)이 화면 밖으로 사라집니다.
+   카카오톡 인앱 브라우저에서 실제로 그런 일이 있었습니다. */
 .app{
+  position:fixed; top:0; left:0; right:0;
   height:100vh;
   height:var(--app-h, 100vh);
   display:flex; flex-direction:column;
@@ -1483,11 +1488,19 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.2.3"
+  VERSION:       "1.2.4"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.2.4",
+    d: "2026-09-10",
+    items: [
+      "카카오톡 등 앱 안의 브라우저에서 위쪽 제목 줄(메뉴·설정 단추)이 보이지 않던 문제를 고쳤습니다. 앱 화면을 아예 못 밀리게 고정했습니다.",
+      "앱 높이가 실제로 보이는 높이를 넘지 않도록 두 값 중 작은 쪽을 씁니다."
+    ]
+  },
   {
     v: "1.2.3",
     d: "2026-09-10",
@@ -1732,15 +1745,25 @@ function fitViewport(){
   const vv = window.visualViewport;
   let h = window.innerHeight || 0;
   // 핀치 확대 중에는 visualViewport 높이가 줄어드므로 배율이 1일 때만 씁니다.
-  if (vv && vv.height && Math.abs((vv.scale || 1) - 1) < 0.01) h = vv.height;
+  if (vv && vv.height && Math.abs((vv.scale || 1) - 1) < 0.01){
+    // 둘 중 작은 값을 씁니다. innerHeight 가 브라우저 막대 뒤까지 포함해
+    // 실제로 보이는 높이보다 클 때가 있습니다.
+    h = h > 0 ? Math.min(h, vv.height) : vv.height;
+  }
   h = Math.round(h);
   if (h > 0) document.documentElement.style.setProperty("--app-h", h + "px");
 
   // 문서가 통째로 밀려 내려간 경우 되돌립니다(입력 중일 때는 건드리지 않습니다).
+  // body 가 스크롤되는 브라우저도 있어서 셋 다 확인합니다.
   const ae = document.activeElement;
   const typing = !!(ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable));
-  const off = window.pageYOffset || document.documentElement.scrollTop || 0;
-  if (!typing && off !== 0) window.scrollTo(0, 0);
+  const de = document.documentElement, bd = document.body;
+  const off = (window.pageYOffset || 0) || (de && de.scrollTop) || (bd && bd.scrollTop) || 0;
+  if (!typing && off !== 0){
+    window.scrollTo(0, 0);
+    if (de) de.scrollTop = 0;
+    if (bd) bd.scrollTop = 0;
+  }
 }
 function initViewport(){
   fitViewport();
