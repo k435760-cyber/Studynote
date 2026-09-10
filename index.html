@@ -419,6 +419,26 @@ button.row:hover{ background:var(--surface-2); }
 }
 .deck.is-running::before{ opacity:1; }
 
+/* 연속 공부 배지 — 카드 맨 위 가운데.
+   오늘 기록이 있으면 색이 들어오고, 어제까지만 이어졌으면 조용한 색입니다. */
+.streak{
+  display:inline-flex; align-items:center; gap:5px;
+  margin:0 auto 12px; padding:5px 11px 5px 9px;
+  border-radius:99px;
+  background:var(--surface-2); border:1px solid transparent;
+  font-size:.75rem; font-weight:600; color:var(--muted);
+  font-variant-numeric:tabular-nums;
+  transition:color .2s ease, background .2s ease, border-color .2s ease;
+}
+.streak[hidden]{ display:none; }
+.streak svg{ width:13px; height:13px; flex:0 0 auto; opacity:.75; }
+.streak.is-live{
+  color:var(--accent);
+  background:var(--glow);
+  border-color:color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.streak.is-live svg{ opacity:1; }
+
 .deck__state{ font-size:.79rem; color:var(--muted); letter-spacing:.01em; }
 .deck__state b{ color:var(--accent); font-weight:600; }
 .clock{
@@ -715,6 +735,10 @@ button.row:hover{ background:var(--surface-2); }
       <!-- ─────────── 공부방 ─────────── -->
       <section class="view" data-view="room">
         <div class="deck" id="deck">
+          <div class="streak" id="streakBox" hidden>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.6 2.2c.5 2.3 1.9 3.6 3.1 4.9 1.4 1.5 2.3 3 2.3 5.1a6 6 0 0 1-12 0c0-2.3 1.1-4.1 2.4-5.3.1 1.2.7 2.1 1.6 2.5.3-2.9.9-5.2 2.6-7.2z"/><path d="M12 21.5a2.6 2.6 0 0 1-2.6-2.6c0-1.6 1.4-2.4 2.6-4.2 1.2 1.8 2.6 2.6 2.6 4.2a2.6 2.6 0 0 1-2.6 2.6z" opacity=".55"/></svg>
+            <span id="streakText">—</span>
+          </div>
           <div class="deck__state" id="deckState">아직 시작하지 않았습니다</div>
           <div class="clock num" id="clock"><span id="clockHead">00:00</span><small id="clockTail">00</small></div>
           <div class="gauge"><div class="gauge__fill" id="gaugeFill"></div></div>
@@ -1143,11 +1167,19 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.0.6"
+  VERSION:       "1.0.7"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.0.7",
+    d: "2026-09-10",
+    items: [
+      "타이머 위에 연속 공부한 날이 보입니다. 하루라도 비면 다시 1일부터 셉니다.",
+      "오늘 아직 기록이 없어도 어제까지 이어졌다면 연속은 살아 있습니다. 오늘 기록하면 그대로 이어집니다."
+    ]
+  },
   {
     v: "1.0.6",
     d: "2026-09-10",
@@ -2426,6 +2458,51 @@ function renderRecent(){
   list.forEach(function(s){ box.appendChild(sessionRow(s)); });
 }
 
+/* ── 연속 공부한 날 ──────────────────────────────────────
+   오늘부터 거꾸로 세어 하루라도 비면 멈춥니다.
+   오늘 아직 기록이 없어도 어제까지 이어졌다면 연속은 살아 있는 것으로 봅니다
+   (그렇지 않으면 매일 아침 0일이 되어버립니다).
+   기록은 최근 200건까지만 불러오므로, 그보다 오래된 날은 세지 않습니다. */
+function streakInfo(){
+  const day = {};
+  S.sessions.forEach(function(s){
+    const k = dayKey(s.ended_at || s.created_at);
+    if (k) day[k] = true;
+  });
+
+  const cur = new Date();
+  cur.setHours(0, 0, 0, 0);
+  const hasToday = !!day[dayKey(cur)];
+  if (!hasToday){
+    cur.setDate(cur.getDate() - 1);
+    if (!day[dayKey(cur)]) return { days: 0, today: false };   // 어제도 없으면 끊긴 것
+  }
+
+  let days = 0;
+  while (day[dayKey(cur)]){
+    days++;
+    cur.setDate(cur.getDate() - 1);
+  }
+  return { days: days, today: hasToday };
+}
+
+function paintStreak(){
+  const box = $("#streakBox");
+  if (!box) return;
+  const st = streakInfo();
+
+  if (st.days <= 0){ box.hidden = true; return; }
+  box.hidden = false;
+  box.classList.toggle("is-live", st.today);
+  $("#streakText").textContent = st.days + "일 연속";
+
+  const msg = st.today
+    ? "오늘까지 " + st.days + "일 연속으로 공부했습니다."
+    : "어제까지 " + st.days + "일 연속입니다. 오늘도 기록하면 " + (st.days + 1) + "일째가 됩니다.";
+  box.title = msg;
+  box.setAttribute("aria-label", msg);
+}
+
 function renderLog(){
   const box = $("#logList");
   box.innerHTML = "";
@@ -2942,6 +3019,7 @@ function renderChangelog(){
 
 /* ===================== [13] 부팅 ===================== */
 function renderAll(){
+  paintStreak();
   renderRecent();
   renderLog();   // renderChart() 포함
 }
@@ -2990,6 +3068,7 @@ function bindUI(){
     }
     const notice = auditTimer();
     paintTimer();
+    if (S.ready) paintStreak();      // 자정을 넘겼을 수 있습니다
     if (S.timer.running){ markSeen(); startTick(); }
     if (notice) alertModal("타이머를 처음으로 되돌렸습니다", notice);
   });
