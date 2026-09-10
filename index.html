@@ -104,6 +104,7 @@ html[data-theme="dark"]{
   /* 요일 순차 램프 (약→강). 카드 배경 #182031 기준으로 검증한 값입니다. */
   --c1:#655139; --c2:#7e6443; --c3:#98764c; --c4:#b38a56;
   --c5:#ce9e5f; --c6:#eab269; --c7:#ffc673;
+  --leaf:#6FBF86; --bark:#7A5A3C;
 }
 html[data-theme="light"]{
   --bg:        #F1F3F7;
@@ -124,10 +125,13 @@ html[data-theme="light"]{
   /* 요일 순차 램프 (약→강). 카드 배경 #FFFFFF 기준으로 검증한 값입니다. */
   --c1:#cbb096; --c2:#ba9979; --c3:#a8825c; --c4:#966c3f;
   --c5:#85561f; --c6:#734000; --c7:#622b00;
+  --leaf:#3E8E5A; --bark:#8A6540;
 }
 
 /* ===================== [C2] 기본 ===================== */
 *,*::before,*::after{ box-sizing:border-box; }
+/* hidden 을 붙였는데도 클래스의 display 가 이기는 경우가 있어 못을 박아둡니다. */
+[hidden]{ display:none !important; }
 html,body{ height:100%; }
 body{
   margin:0;
@@ -369,6 +373,94 @@ button.row:hover{ background:var(--surface-2); }
   font-size:.86rem; font-weight:550; color:var(--muted);
   transition:background .16s ease, color .16s ease;
 }
+/* 나무 스킨 (상점에서 바꿉니다) */
+html[data-tree="sakura"]{ --leaf:#E48FB1; }
+html[data-tree="maple"]{ --leaf:#D2703A; }
+html[data-tree="night"]{ --leaf:#4E7CA8; }
+
+/* ── 집중 나무 ── */
+.treebtn{
+  position:absolute; top:12px; right:12px;
+  width:34px; height:34px; border-radius:11px;
+  display:grid; place-items:center;
+  color:var(--muted); background:var(--surface-2);
+  transition:background .16s ease, color .16s ease;
+}
+.treebtn svg{ width:18px; height:18px; }
+.treebtn[aria-checked="true"]{ background:var(--accent); color:var(--accent-ink); }
+.tree{ margin-top:18px; padding-top:16px; border-top:1px solid var(--line-soft); }
+.tree__art{ display:flex; justify-content:center; }
+.tree__art svg{ display:block; width:100%; max-width:220px; height:auto; }
+.tree__foot{ display:flex; align-items:baseline; gap:10px; margin-top:10px; }
+.tree__name{ font-size:.88rem; font-weight:650; }
+.tree__next{ margin-left:auto; font-size:.75rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+
+/* ── 공부 캘린더 ── */
+.cal{ display:flex; gap:3px; overflow:hidden; }
+.cal__wk{ display:flex; flex-direction:column; gap:3px; flex:1 1 0; min-width:0; }
+.cal__d{ width:100%; aspect-ratio:1/1; border-radius:3px; background:var(--surface-2); padding:0; }
+.cal__d.is-out{ opacity:.35; }
+.cal__d.is-today{ box-shadow:0 0 0 2px var(--accent); }
+.cal__d.is-sel{ box-shadow:0 0 0 2px var(--text); }
+.cal__d--1{ background:var(--c2); }
+.cal__d--2{ background:var(--c4); }
+.cal__d--3{ background:var(--c6); }
+.cal__d--4{ background:var(--c7); }
+.cal__legend{ display:flex; align-items:center; justify-content:flex-end; gap:4px; margin-top:9px; font-size:.7rem; color:var(--muted); }
+.cal__c{ width:10px; height:10px; border-radius:3px; background:var(--surface-2); }
+.cal__c--1{ background:var(--c2); } .cal__c--2{ background:var(--c4); }
+.cal__c--3{ background:var(--c6); } .cal__c--4{ background:var(--c7); }
+.cal__legend span:first-child{ margin-right:2px; }
+.cal__legend span:last-child{ margin-left:2px; }
+
+/* ── 상점 ── */
+.shop__top{ padding:16px 18px; }
+.shop__have{ display:flex; align-items:baseline; gap:10px; }
+.shop__haveK{ font-size:.82rem; color:var(--muted); }
+.shop__haveV{ margin-left:auto; font-size:1.24rem; font-weight:650; color:var(--accent); }
+.shop__lead{ margin-top:8px; font-size:.76rem; color:var(--muted); line-height:1.6; }
+.shop__group + .shop__group{ margin-top:22px; }
+.shop__gt{ font-size:.95rem; font-weight:650; margin-bottom:10px; }
+.item{
+  display:flex; align-items:center; gap:12px; width:100%;
+  padding:13px 14px; border-radius:var(--r-m); text-align:left;
+  background:var(--surface); border:1px solid var(--line-soft);
+  transition:border-color .14s ease, background .14s ease;
+}
+.item + .item{ margin-top:8px; }
+.item:hover{ background:var(--surface-2); }
+.item__ico{ flex:0 0 auto; width:40px; height:40px; border-radius:12px; display:grid; place-items:center; background:var(--surface-2); color:var(--muted); }
+.item__ico svg{ width:21px; height:21px; }
+.item__main{ flex:1 1 auto; min-width:0; }
+.item__t{ display:block; font-size:.9rem; font-weight:600; }
+.item__d{ display:block; margin-top:2px; font-size:.75rem; color:var(--muted); line-height:1.5; }
+.item__side{ flex:0 0 auto; font-size:.8rem; font-weight:650; color:var(--accent); font-variant-numeric:tabular-nums; }
+.item.is-own{ border-color:var(--line); }
+.item.is-own .item__side{ color:var(--muted); font-weight:550; }
+.item.is-on{ border-color:var(--accent); background:var(--surface); }
+.item.is-on .item__ico{ background:var(--accent); color:var(--accent-ink); }
+.item.is-on .item__side{ color:var(--accent); }
+.item.is-lock .item__side{ color:var(--muted); }
+
+/* ── 업적 ── */
+.ach{ display:grid; grid-template-columns:repeat(auto-fill, minmax(102px, 1fr)); gap:9px; }
+.badge{
+  padding:13px 10px 12px; border-radius:var(--r-m); text-align:center;
+  background:var(--surface); border:1px solid var(--line-soft);
+}
+.badge__ico{ width:34px; height:34px; margin:0 auto 7px; border-radius:50%; display:grid; place-items:center; background:var(--surface-2); color:var(--muted); }
+.badge__ico svg{ width:18px; height:18px; }
+.badge__t{ display:block; font-size:.76rem; font-weight:600; line-height:1.35; word-break:keep-all; }
+.badge__d{ display:block; margin-top:3px; font-size:.68rem; color:var(--muted); line-height:1.4; word-break:keep-all; }
+.badge.is-got{ border-color:var(--accent); }
+.badge.is-got .badge__ico{ background:var(--accent); color:var(--accent-ink); }
+.badge.is-locked .badge__t{ color:var(--muted); }
+
+/* 이름 옆 뱃지 */
+.mark{ display:inline-block; margin-left:5px; color:var(--accent); vertical-align:-2px; }
+.mark svg{ width:13px; height:13px; }
+.clock.is-gold{ color:#D8A431; }
+
 /* 켜기/끄기 스위치 */
 .switch{
   position:relative; flex:0 0 auto;
@@ -789,6 +881,9 @@ button.srow:hover .srow__n{ color:var(--text); }
       <!-- ─────────── 공부방 ─────────── -->
       <section class="view" data-view="room">
         <div class="deck" id="deck">
+          <button class="treebtn" id="btnTree" data-extra role="switch" aria-checked="false" aria-label="집중 나무 보기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21v-6"/><path d="M12 15c-3.6 0-6-2.2-6-5.2C6 6.4 8.7 3 12 3s6 3.4 6 6.8c0 3-2.4 5.2-6 5.2z"/></svg>
+          </button>
           <div class="streak" id="streakBox" hidden>
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.6 2.2c.5 2.3 1.9 3.6 3.1 4.9 1.4 1.5 2.3 3 2.3 5.1a6 6 0 0 1-12 0c0-2.3 1.1-4.1 2.4-5.3.1 1.2.7 2.1 1.6 2.5.3-2.9.9-5.2 2.6-7.2z"/><path d="M12 21.5a2.6 2.6 0 0 1-2.6-2.6c0-1.6 1.4-2.4 2.6-4.2 1.2 1.8 2.6 2.6 2.6 4.2a2.6 2.6 0 0 1-2.6 2.6z" opacity=".55"/></svg>
             <span id="streakText">—</span>
@@ -797,6 +892,14 @@ button.srow:hover .srow__n{ color:var(--text); }
           <div class="clock num" id="clock"><span id="clockHead">00:00</span><small id="clockTail">00</small></div>
           <div class="gauge"><div class="gauge__fill" id="gaugeFill"></div></div>
           <div class="gauge__hint" id="gaugeHint">30분을 채울 때마다 3포인트가 쌓입니다</div>
+
+          <div class="tree" id="treeBox" data-extra hidden>
+            <div class="tree__art" id="treeArt"></div>
+            <div class="tree__foot">
+              <span class="tree__name" id="treeName">씨앗</span>
+              <span class="tree__next" id="treeNext">—</span>
+            </div>
+          </div>
 
           <div class="deck__form">
             <label class="sr-only" for="subject">공부 내용</label>
@@ -861,6 +964,22 @@ button.srow:hover .srow__n{ color:var(--text); }
             <div class="chart" id="chart"></div>
             <div class="chart__read" id="chartRead">—</div>
             <div class="chart__foot" id="chartFoot" hidden></div>
+          </div>
+        </div>
+
+        <div class="section" data-extra>
+          <div class="section__head">
+            <h2 class="section__title">공부 캘린더</h2>
+            <span class="section__note num" id="calNote">—</span>
+          </div>
+          <div class="card">
+            <div class="cal" id="calGrid"></div>
+            <div class="cal__legend">
+              <span>적음</span>
+              <i class="cal__c cal__c--0"></i><i class="cal__c cal__c--1"></i><i class="cal__c cal__c--2"></i><i class="cal__c cal__c--3"></i><i class="cal__c cal__c--4"></i>
+              <span>많음</span>
+            </div>
+            <div class="chart__read" id="calRead">—</div>
           </div>
         </div>
 
@@ -930,6 +1049,20 @@ button.srow:hover .srow__n{ color:var(--text); }
         </div>
       </section>
 
+      <!-- ─────────── 상점 ─────────── -->
+      <section class="view" data-view="shop" hidden>
+        <div class="section">
+          <div class="card card--flat shop__top">
+            <div class="shop__have">
+              <span class="shop__haveK">가진 포인트</span>
+              <span class="shop__haveV num" id="shopPoints">0P</span>
+            </div>
+            <p class="shop__lead">30분을 채울 때마다 3포인트가 쌓입니다. 모은 포인트로 꾸밀 거리를 바꿀 수 있습니다.</p>
+          </div>
+        </div>
+        <div class="section" id="shopList"></div>
+      </section>
+
       <!-- ─────────── 프로필 ─────────── -->
       <section class="view" data-view="profile" hidden>
         <div class="section" style="text-align:center">
@@ -994,6 +1127,14 @@ button.srow:hover .srow__n{ color:var(--text); }
           </div>
         </div>
 
+        <div class="section" data-extra>
+          <div class="section__head">
+            <h2 class="section__title">업적</h2>
+            <span class="section__note num" id="achNote">—</span>
+          </div>
+          <div class="ach" id="achList"></div>
+        </div>
+
         <div class="section">
           <div class="section__head">
             <h2 class="section__title">업데이트 내역</h2>
@@ -1047,6 +1188,10 @@ button.srow:hover .srow__n{ color:var(--text); }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 21h10M12 17v4"/><path d="M6 4h12v5a6 6 0 0 1-12 0z"/><path d="M18 5h2.5a2.5 2.5 0 0 1 0 5H18M6 5H3.5a2.5 2.5 0 0 0 0 5H6"/></svg>
       <span>랭킹</span>
       <span class="navitem__badge" id="navPoint"></span>
+    </button>
+    <button class="navitem" data-go="shop">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16l-1.2 11.2a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8z"/><path d="M8.5 11V7a3.5 3.5 0 0 1 7 0v4"/></svg>
+      <span>상점</span>
     </button>
     <button class="navitem" data-go="profile">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
@@ -1284,11 +1429,23 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.1.1"
+  VERSION:       "1.2.0"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.2.0",
+    d: "2026-09-10",
+    items: [
+      "집중 나무가 생겼습니다. 앉은 시간이 쌓일수록 씨앗에서 작은 숲까지 자랍니다. 타이머 오른쪽 위 단추로 켜고 끕니다.",
+      "공부 캘린더가 생겼습니다. 기록 화면에서 어느 날 얼마나 앉았는지 한눈에 봅니다. 칸을 누르면 그날 시간이 나옵니다.",
+      "업적이 생겼습니다. 설정에서 지금까지 이룬 것을 봅니다. 모두 15가지입니다.",
+      "상점이 생겼습니다. 모은 포인트로 나무 모양, 이름 옆 표시, 타이머 숫자 색을 바꿀 수 있습니다.",
+      "포인트는 이제 서버에서만 오갑니다. 브라우저에서 포인트를 직접 고칠 수 없습니다.",
+      "기능 단순화를 켜면 집중 나무·공부 캘린더·업적이 함께 숨습니다. 상점은 그대로 남습니다."
+    ]
+  },
   {
     v: "1.1.1",
     d: "2026-09-10",
@@ -1414,12 +1571,12 @@ const CHANGELOG = [
 ];
 
 const VIEW_TITLE = {
-  room:"공부방", log:"기록", rank:"랭킹",
+  room:"공부방", log:"기록", rank:"랭킹", shop:"상점",
   profile:"프로필", privacy:"개인정보 처리방침", settings:"설정"
 };
 
 /* 그래프 보기 방식은 CHARTS 안의 ls 키에 그래프별로 저장합니다. */
-const LS = { theme:"jari.theme", timer:"jari.timer", view:"jari.view", goal:"jari.goal", simple:"jari.simple" };
+const LS = { theme:"jari.theme", timer:"jari.timer", view:"jari.view", goal:"jari.goal", simple:"jari.simple", tree:"jari.tree" };
 
 /* ===================== [2] 상태 ===================== */
 const S = {
@@ -1431,6 +1588,7 @@ const S = {
   prevView: "settings",
   goal: CONFIG.GOAL_DEFAULT,   // 오늘의 목표 (초). 0 이면 쓰지 않음
   simple: false,         // 기능 단순화 — 켜면 data-extra 가 붙은 칸을 숨깁니다
+  tree: true,            // 집중 나무 보기
   ready: false,
   timer: { running:false, startedAt:null, accumulated:0, seenAt:0 }, // ms 기준
   tickId: null,
@@ -1867,6 +2025,7 @@ function go(view){
   closeNav();
   if (view === "rank") loadRank();
   if (view === "log") renderLog();
+  if (view === "shop") renderShop();
 }
 function initRouting(){
   document.addEventListener("click", function(e){
@@ -1951,7 +2110,7 @@ function paintProfile(){
   const name = p.display_name || "이름 없음";
   const mail = p.email || (S.user && S.user.email) || "—";
 
-  $("#drawerName").textContent = name;
+  $("#drawerName").innerHTML = escapeHtml(name) + markHtml(equipped());
   $("#drawerMail").textContent = mail;
   $("#mailValue").textContent = mail;
   $("#mailValue2").textContent = mail;
@@ -2800,6 +2959,7 @@ function renderLog(){
     S.sessions.forEach(function(s){ box.appendChild(sessionRow(s)); });
   }
   renderCharts();
+  renderCalendar();
   renderBests();
 }
 
@@ -3509,7 +3669,7 @@ async function loadRank(){
     paintAvatar(av, p, who);
     const label = document.createElement("div");
     label.className = "row__label";
-    label.innerHTML = '<span style="font-weight:550">' + escapeHtml(who) + '</span>' +
+    label.innerHTML = '<span style="font-weight:550">' + escapeHtml(who) + markHtml(p.equipped) + '</span>' +
                       '<span class="row__sub">' + escapeHtml(fmtDur(p.total_seconds || 0)) + '</span>';
     const pts = document.createElement("div");
     pts.className = "log__p num";
@@ -3517,6 +3677,399 @@ async function loadRank(){
     row.appendChild(no); row.appendChild(av); row.appendChild(label); row.appendChild(pts);
     box.appendChild(row);
   });
+}
+
+/* ===================== [11-d] 집중 나무 / 공부 캘린더 / 업적 / 상점 =====================
+   네 가지 모두 이미 있는 값(S.profile, S.sessions)으로 그립니다.
+   상점에서 산 물건만 서버에 남습니다(sr_profiles.inventory / equipped).
+   포인트 차감은 서버 함수 sr_buy 가 합니다. 브라우저에서는 포인트를 고칠 수 없습니다. */
+
+/* ── 아이콘 (여러 곳에서 돌려 씁니다) ── */
+const ICONS = {
+  seed:  '<path d="M12 21c0-5 3-9 8-10-1 5-4 8-8 10z"/><path d="M12 21c0-5-3-9-8-10 1 5 4 8 8 10z"/>',
+  star:  '<path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>',
+  crown: '<path d="M4 8l3.5 3L12 5l4.5 6L20 8l-1.5 10h-13z"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.2V12l3.2 2"/>',
+  fire:  '<path d="M12.6 2.6c.5 2.2 1.8 3.4 3 4.6 1.3 1.4 2.2 2.9 2.2 4.9a5.8 5.8 0 0 1-11.6 0c0-2.2 1-3.9 2.3-5.1.1 1.1.7 2 1.5 2.4.3-2.8.9-5 2.6-6.8z"/>',
+  book:  '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H19v3H6.5A2.5 2.5 0 0 1 4 20.5z"/>',
+  moon:  '<path d="M20 14.3A8.5 8.5 0 1 1 9.2 3.5 6.9 6.9 0 0 0 20 14.3z"/>',
+  sun:   '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.5 1.5M17.6 17.6l1.5 1.5M19.1 4.9l-1.5 1.5M6.4 17.6l-1.5 1.5"/>',
+  trophy:'<path d="M7 21h10M12 17v4"/><path d="M6 4h12v5a6 6 0 0 1-12 0z"/><path d="M18 5h2.5a2.5 2.5 0 0 1 0 5H18M6 5H3.5a2.5 2.5 0 0 0 0 5H6"/>',
+  tree:  '<path d="M12 21v-6"/><path d="M12 15c-3.6 0-6-2.2-6-5.2C6 6.4 8.7 3 12 3s6 3.4 6 6.8c0 3-2.4 5.2-6 5.2z"/>',
+  cal:   '<rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  target:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>'
+};
+function iconSvg(name, cls){
+  return '<svg' + (cls ? ' class="' + cls + '"' : '') + ' viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+         'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+         (ICONS[name] || ICONS.star) + '</svg>';
+}
+
+/* ── 지금 쓰는 꾸밈 ── */
+function equipped(){
+  const e = S.profile && S.profile.equipped;
+  return (e && typeof e === "object") ? e : {};
+}
+function inventory(){
+  const v = S.profile && S.profile.inventory;
+  return Array.isArray(v) ? v : [];
+}
+/* 이름 옆에 붙는 표시 (순위표·프로필) */
+function markHtml(eq){
+  const b = eq && eq.badge;
+  if (b !== "star" && b !== "crown") return "";
+  return '<span class="mark">' +
+    '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+    (b === "crown" ? '<path d="M4 8l3.5 3L12 5l4.5 6L20 8l-1.5 10h-13z"/>'
+                   : '<path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/>') +
+    '</svg></span>';
+}
+function applyCosmetics(){
+  const eq = equipped();
+  document.documentElement.setAttribute("data-tree", eq.tree || "basic");
+  const clk = $("#clock");
+  if (clk) clk.classList.toggle("is-gold", eq.clock === "gold");
+}
+
+/* ── 집중 나무 ─────────────────────────────────────────
+   앉은 시간이 쌓일수록 자랍니다. 단계는 계정 전체 누적 시간으로 정합니다.
+   새 단계를 넣으려면 TREE_STAGES 에 { at, name } 을 추가하면 됩니다. */
+const TREE_STAGES = [
+  { at:0,      name:"씨앗" },
+  { at:1800,   name:"새싹" },
+  { at:7200,   name:"떡잎" },
+  { at:18000,  name:"어린 나무" },
+  { at:36000,  name:"가지 뻗은 나무" },
+  { at:72000,  name:"무성한 나무" },
+  { at:144000, name:"열매 맺은 나무" },
+  { at:288000, name:"큰 나무" },
+  { at:540000, name:"작은 숲" }
+];
+function treeStage(sec){
+  let i = 0;
+  for (let k = 0; k < TREE_STAGES.length; k++) if (sec >= TREE_STAGES[k].at) i = k;
+  return i;
+}
+/* 단계에 맞춰 나무를 그립니다. 자리는 정해진 값이라 그릴 때마다 흔들리지 않습니다. */
+function treeSvg(stage, skin){
+  const W = 220, H = 150, gy = H - 12;
+  const parts = [];
+  parts.push('<line x1="18" y1="' + gy + '" x2="' + (W - 18) + '" y2="' + gy + '" style="stroke:var(--line)" stroke-width="1.5" stroke-linecap="round"/>');
+
+  if (skin === "night"){
+    [[36,26],[70,16],[150,22],[186,34],[110,12]].forEach(function(p, i){
+      parts.push('<circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + (i % 2 ? 1.6 : 2.2) + '" style="fill:var(--leaf)" opacity=".7"/>');
+    });
+  }
+  if (stage === 0){
+    parts.push('<path d="M110 ' + (gy - 4) + ' c-9 -6 -9 -16 0 -20 9 4 9 14 0 20z" style="fill:var(--leaf)"/>');
+    parts.push('<path d="M110 ' + (gy - 4) + ' v-16" style="stroke:var(--bark)" stroke-width="2" stroke-linecap="round"/>');
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="집중 나무 · ' + TREE_STAGES[stage].name + '">' + parts.join("") + '</svg>';
+  }
+
+  const trunkH = [0, 22, 34, 52, 66, 78, 88, 96, 100][stage];
+  const trunkW = [0, 3, 4, 6, 8, 10, 11, 12, 13][stage];
+  const topY = gy - trunkH;
+  /* 아래가 넓고 위로 갈수록 좁아지는 곧은 줄기 */
+  const tw = trunkW / 2, tt = trunkW * .34;
+  parts.push('<path d="M' + (110 - tw) + ' ' + gy + ' L' + (110 - tt) + ' ' + topY +
+             ' L' + (110 + tt) + ' ' + topY + ' L' + (110 + tw) + ' ' + gy + ' Z" style="fill:var(--bark)"/>');
+
+  if (stage >= 3){
+    const bl = 14 + stage * 3;
+    parts.push('<path d="M110 ' + (topY + 22) + ' l-' + bl + ' -' + (bl * .7) + '" style="stroke:var(--bark)" stroke-width="' + Math.max(2, trunkW * .4) + '" stroke-linecap="round"/>');
+    parts.push('<path d="M110 ' + (topY + 30) + ' l' + bl + ' -' + (bl * .7) + '" style="stroke:var(--bark)" stroke-width="' + Math.max(2, trunkW * .4) + '" stroke-linecap="round"/>');
+  }
+
+  const blobs = [
+    [[110, 0, 15]],
+    [[110, -2, 19]],
+    [[110, -4, 24], [92, 6, 15], [128, 6, 15]],
+    [[110, -8, 28], [86, 4, 19], [134, 4, 19]],
+    [[110, -12, 32], [80, 2, 23], [140, 2, 23], [110, 16, 22]],
+    [[110, -14, 34], [76, 0, 26], [144, 0, 26], [96, 18, 20], [124, 18, 20]],
+    [[110, -16, 36], [72, -2, 28], [148, -2, 28], [94, 20, 22], [126, 20, 22]],
+    [[110, -18, 38], [70, -4, 30], [150, -4, 30], [92, 22, 24], [128, 22, 24]]
+  ][Math.min(stage, 8) - 1] || [];
+  blobs.forEach(function(b){
+    parts.push('<circle cx="' + b[0] + '" cy="' + (topY + b[1]) + '" r="' + b[2] + '" style="fill:var(--leaf)"/>');
+  });
+
+  if (stage >= 6){
+    [[92, 8], [128, 12], [110, -6]].forEach(function(f){
+      parts.push('<circle cx="' + f[0] + '" cy="' + (topY + f[1]) + '" r="3.4" style="fill:var(--accent)"/>');
+    });
+  }
+  if (stage >= 8){
+    [[42, .62], [178, .62]].forEach(function(t){
+      const x = t[0], sc = t[1], th = 100 * sc * .6;
+      parts.push('<path d="M' + (x - 3) + ' ' + gy + ' v-' + th + ' h6 v' + th + ' z" style="fill:var(--bark)"/>');
+      parts.push('<circle cx="' + x + '" cy="' + (gy - th - 6) + ' " r="' + (22 * sc) + '" style="fill:var(--leaf)"/>');
+    });
+  }
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="집중 나무 · ' + TREE_STAGES[stage].name + '">' + parts.join("") + '</svg>';
+}
+function paintTree(){
+  const box = $("#treeBox"), btn = $("#btnTree");
+  if (!box || !btn) return;
+  btn.setAttribute("aria-checked", String(!!S.tree));
+  /* 기능 단순화를 켜두었다면 그대로 숨겨둡니다(여기서 다시 열지 않도록). */
+  const show = !!S.tree && !S.simple;
+  box.hidden = !show;
+  if (!show) return;
+
+  const sec = (S.profile && S.profile.total_seconds) || 0;
+  const i = treeStage(sec);
+  $("#treeArt").innerHTML = treeSvg(i, (equipped().tree || "basic"));
+  $("#treeName").textContent = TREE_STAGES[i].name;
+  const next = TREE_STAGES[i + 1];
+  $("#treeNext").textContent = next
+    ? ("다음 단계까지 " + fmtDur(next.at - sec))
+    : "끝까지 키웠습니다";
+}
+function toggleTree(){
+  S.tree = !S.tree;
+  try { localStorage.setItem(LS.tree, S.tree ? "1" : "0"); } catch (e) {}
+  paintTree();
+}
+
+/* ── 공부 캘린더 ─────────────────────────────────────── */
+function calLevel(sec){
+  if (sec <= 0) return 0;
+  if (sec < 3600) return 1;
+  if (sec < 7200) return 2;
+  if (sec < 14400) return 3;
+  return 4;
+}
+function renderCalendar(){
+  const grid = $("#calGrid");
+  if (!grid) return;
+  const read = $("#calRead"), note = $("#calNote");
+  const day = dayTotals();
+
+  const w = Math.max(180, Math.round(grid.clientWidth || 300));
+  const weeks = Math.max(10, Math.min(26, Math.floor((w + 3) / 15)));
+  if (note) note.textContent = "최근 " + weeks + "주";
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const end = new Date(today);
+  end.setDate(end.getDate() + (6 - end.getDay()));      // 이번 주 토요일까지
+  const start = new Date(end);
+  start.setDate(start.getDate() - (weeks * 7 - 1));      // 그 주의 일요일부터
+
+  grid.innerHTML = "";
+  const cur = new Date(start);
+  for (let x = 0; x < weeks; x++){
+    const col = document.createElement("div");
+    col.className = "cal__wk";
+    for (let y = 0; y < 7; y++){
+      const k = dayKey(cur);
+      const sec = day[k] || 0;
+      const b = document.createElement("button");
+      b.type = "button";
+      const lv = calLevel(sec);
+      b.className = "cal__d cal__d--" + lv +
+        (cur > today ? " is-out" : "") +
+        (k === dayKey(today) ? " is-today" : "");
+      b.dataset.key = k;
+      b.title = fmtDayKey(k) + " · " + (sec > 0 ? fmtDur(sec) : "기록 없음");
+      b.setAttribute("aria-label", b.title);
+      b.addEventListener("click", function(){
+        $$(".cal__d", grid).forEach(function(x2){ x2.classList.remove("is-sel"); });
+        b.classList.add("is-sel");
+        if (read) read.innerHTML = "<b>" + escapeHtml(fmtDayKey(k)) + "</b> · " +
+          (sec > 0 ? "<i>" + escapeHtml(fmtDur(sec)) + "</i>" : "기록 없음");
+      });
+      col.appendChild(b);
+      cur.setDate(cur.getDate() + 1);
+    }
+    grid.appendChild(col);
+  }
+
+  let days = 0, sum = 0;
+  Object.keys(day).forEach(function(k){
+    if (k >= dayKey(start) && k <= dayKey(today)){ days++; sum += day[k]; }
+  });
+  if (read){
+    read.innerHTML = days > 0
+      ? ("이 기간에 <b>" + days + "일</b> 앉았습니다 · 모두 <i>" + escapeHtml(fmtDur(sum)) + "</i>")
+      : "칸을 누르면 그날 공부한 시간이 나옵니다.";
+  }
+}
+
+/* ── 업적 ───────────────────────────────────────────── */
+const ACHIEVEMENTS = [
+  { id:"first",    ico:"seed",   t:"첫 걸음",      d:"처음 기록했습니다",        test:function(x){ return x.count >= 1; } },
+  { id:"point",    ico:"star",   t:"첫 포인트",    d:"30분을 채웠습니다",        test:function(x){ return x.points >= 3; } },
+  { id:"one2h",    ico:"clock",  t:"한 번에 2시간", d:"한 번에 2시간 앉았습니다",  test:function(x){ return x.bestOne >= 7200; } },
+  { id:"day3h",    ico:"target", t:"하루 3시간",   d:"하루에 3시간 앉았습니다",   test:function(x){ return x.bestDay >= 10800; } },
+  { id:"goal",     ico:"target", t:"목표 달성",    d:"오늘 목표를 채웠습니다",    test:function(x){ return x.goalDone; } },
+  { id:"streak3",  ico:"fire",   t:"사흘 연속",    d:"사흘 내리 앉았습니다",     test:function(x){ return x.streak >= 3; } },
+  { id:"streak7",  ico:"fire",   t:"이레 연속",    d:"이레 내리 앉았습니다",     test:function(x){ return x.streak >= 7; } },
+  { id:"streak30", ico:"fire",   t:"서른 날 연속", d:"서른 날 내리 앉았습니다",   test:function(x){ return x.streak >= 30; } },
+  { id:"total10",  ico:"tree",   t:"10시간",       d:"모두 10시간 앉았습니다",    test:function(x){ return x.total >= 36000; } },
+  { id:"total50",  ico:"tree",   t:"50시간",       d:"모두 50시간 앉았습니다",    test:function(x){ return x.total >= 180000; } },
+  { id:"total100", ico:"trophy", t:"100시간",      d:"모두 100시간 앉았습니다",   test:function(x){ return x.total >= 360000; } },
+  { id:"count50",  ico:"cal",    t:"50번",         d:"쉰 번 기록했습니다",       test:function(x){ return x.count >= 50; } },
+  { id:"subj5",    ico:"book",   t:"과목 다섯",    d:"다섯 가지를 공부했습니다",  test:function(x){ return x.subjects >= 5; } },
+  { id:"night",    ico:"moon",   t:"새벽 공부",    d:"0시~5시에 기록했습니다",    test:function(x){ return x.night; } },
+  { id:"morning",  ico:"sun",    t:"아침 공부",    d:"5시~8시에 기록했습니다",    test:function(x){ return x.morning; } }
+];
+function achStats(){
+  const p = S.profile || {};
+  const x = { count: p.session_count || S.sessions.length, points: p.points || 0,
+              total: p.total_seconds || 0, bestOne:0, bestDay:0, streak:0, subjects:0,
+              night:false, morning:false, goalDone:false };
+  S.sessions.forEach(function(s){
+    if ((s.duration_seconds || 0) > x.bestOne) x.bestOne = s.duration_seconds || 0;
+    const d = new Date(s.ended_at || s.created_at);
+    if (!isNaN(d)){
+      const h = d.getHours();
+      if (h < 5) x.night = true;
+      else if (h < 8) x.morning = true;
+    }
+  });
+  const b = bestRecords();
+  if (b.day) x.bestDay = b.day.sec;
+  if (b.streak) x.streak = b.streak.days;
+  x.subjects = subjectTotals().length;
+  if (S.goal > 0 && todaySeconds() >= S.goal) x.goalDone = true;
+  return x;
+}
+function renderAchievements(){
+  const box = $("#achList");
+  if (!box) return;
+  box.innerHTML = "";
+  const x = achStats();
+  let got = 0;
+  ACHIEVEMENTS.forEach(function(a){
+    let ok = false;
+    try { ok = !!a.test(x); } catch (e) {}
+    if (ok) got++;
+    const el = document.createElement("div");
+    el.className = "badge " + (ok ? "is-got" : "is-locked");
+    el.innerHTML =
+      '<span class="badge__ico">' + iconSvg(a.ico) + '</span>' +
+      '<span class="badge__t">' + escapeHtml(a.t) + '</span>' +
+      '<span class="badge__d">' + escapeHtml(a.d) + '</span>';
+    el.title = a.t + " — " + a.d + (ok ? " (달성)" : " (아직)");
+    box.appendChild(el);
+  });
+  const note = $("#achNote");
+  if (note) note.textContent = got + " / " + ACHIEVEMENTS.length;
+}
+
+/* ── 상점 ───────────────────────────────────────────── */
+/* 값은 서버 함수 sr_buy 가 정합니다. 여기 적힌 값은 화면에 보여주기 위한 것입니다. */
+const SHOP = [
+  { group:"집중 나무", items:[
+    { id:"tree_basic",  slot:"tree",  val:"basic",  cost:0,   ico:"tree",  t:"기본 나무", d:"처음부터 가지고 있습니다" },
+    { id:"tree_sakura", slot:"tree",  val:"sakura", cost:40,  ico:"tree",  t:"벚꽃 나무", d:"잎이 분홍빛이 됩니다" },
+    { id:"tree_maple",  slot:"tree",  val:"maple",  cost:40,  ico:"tree",  t:"단풍 나무", d:"잎이 붉게 물듭니다" },
+    { id:"tree_night",  slot:"tree",  val:"night",  cost:60,  ico:"moon",  t:"밤 나무",   d:"잎이 푸르고 별이 함께 뜹니다" }
+  ]},
+  { group:"이름 옆 표시", items:[
+    { id:"badge_none",  slot:"badge", val:"",       cost:0,   ico:"star",  t:"표시 없음", d:"아무것도 붙이지 않습니다" },
+    { id:"badge_star",  slot:"badge", val:"star",   cost:80,  ico:"star",  t:"별",       d:"순위와 프로필에 별이 붙습니다" },
+    { id:"badge_crown", slot:"badge", val:"crown",  cost:150, ico:"crown", t:"왕관",     d:"순위와 프로필에 왕관이 붙습니다" }
+  ]},
+  { group:"타이머", items:[
+    { id:"clock_basic", slot:"clock", val:"",       cost:0,   ico:"clock", t:"기본 숫자", d:"기본 색으로 봅니다" },
+    { id:"clock_gold",  slot:"clock", val:"gold",   cost:120, ico:"clock", t:"황금 숫자", d:"타이머 숫자가 금빛이 됩니다" }
+  ]}
+];
+function itemOwned(it){ return it.cost <= 0 || inventory().indexOf(it.id) >= 0; }
+function itemOn(it){
+  const eq = equipped();
+  const cur = eq[it.slot] === undefined ? (it.slot === "tree" ? "basic" : "") : eq[it.slot];
+  return cur === it.val;
+}
+function renderShop(){
+  const box = $("#shopList");
+  if (!box) return;
+  box.innerHTML = "";
+  const pts = (S.profile && S.profile.points) || 0;
+  const pv = $("#shopPoints");
+  if (pv) pv.textContent = pts + "P";
+
+  SHOP.forEach(function(g){
+    const wrap = document.createElement("div");
+    wrap.className = "shop__group";
+    const h = document.createElement("div");
+    h.className = "shop__gt";
+    h.textContent = g.group;
+    wrap.appendChild(h);
+
+    g.items.forEach(function(it){
+      const own = itemOwned(it), on = itemOn(it);
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "item" + (on ? " is-on" : own ? " is-own" : (pts < it.cost ? " is-lock" : ""));
+      b.innerHTML =
+        '<span class="item__ico">' + iconSvg(it.ico) + '</span>' +
+        '<span class="item__main"><span class="item__t">' + escapeHtml(it.t) + '</span>' +
+        '<span class="item__d">' + escapeHtml(it.d) + '</span></span>' +
+        '<span class="item__side">' + (on ? "쓰는 중" : own ? "고르기" : (it.cost + "P")) + '</span>';
+      b.addEventListener("click", function(){ tapItem(it); });
+      wrap.appendChild(b);
+    });
+    box.appendChild(wrap);
+  });
+}
+async function tapItem(it){
+  if (itemOn(it)) return;
+  if (itemOwned(it)){ await equipItem(it); return; }
+
+  const pts = (S.profile && S.profile.points) || 0;
+  if (pts < it.cost){
+    await alertModal("포인트가 모자랍니다",
+      it.t + "은(는) " + it.cost + "포인트입니다. 지금은 " + pts + "포인트를 가지고 있습니다. " +
+      "30분을 채울 때마다 3포인트가 쌓입니다.");
+    return;
+  }
+  const ok = await confirmModal("살까요?", it.t + " · " + it.cost + "포인트를 씁니다. 남는 포인트는 " + (pts - it.cost) + "P 입니다.", "사기");
+  if (!ok) return;
+
+  if (S.busy) return;
+  S.busy = true;
+  let res = null, err = null;
+  try {
+    const r = await S.sb.rpc("sr_buy", { p_item: it.id });
+    res = r.data; err = r.error;
+  } catch (e) { err = e; }
+  S.busy = false;
+
+  if (err || !res){
+    await alertModal("사지 못했습니다", (err && err.message) ? String(err.message).slice(0, 120) : "잠시 후 다시 시도해 주세요.");
+    return;
+  }
+  if (res.ok === false){
+    await alertModal("포인트가 모자랍니다", "이 물건은 " + res.need + "포인트입니다. 지금은 " + res.points + "포인트입니다.");
+    S.profile.points = res.points;
+    paintProfile(); renderShop();
+    return;
+  }
+  S.profile.points = res.points;
+  S.profile.inventory = res.inventory || inventory().concat([it.id]);
+  toast("<b>" + escapeHtml(it.t) + "</b> 을(를) 샀습니다.");
+  await equipItem(it);
+  paintProfile();
+}
+async function equipItem(it){
+  const eq = Object.assign({}, equipped());
+  eq[it.slot] = it.val;
+  S.profile.equipped = eq;
+  applyCosmetics();
+  paintTree();
+  paintProfile();
+  renderShop();
+  if (!S.user || !S.sb) return;
+  try {
+    const { error } = await S.sb.from("sr_profiles")
+      .update({ equipped: eq, updated_at: new Date().toISOString() })
+      .eq("id", S.user.id);
+    if (error) toast("이 기기에서만 바뀌었습니다.");
+  } catch (e) { toast("이 기기에서만 바뀌었습니다."); }
 }
 
 /* ===================== [12] 개인정보 처리방침 / 변경 내역 ===================== */
@@ -3573,8 +4126,12 @@ function renderChangelog(){
 
 /* ===================== [13] 부팅 ===================== */
 function renderAll(){
+  applyCosmetics();
   paintGoal();
   paintStreak();
+  paintTree();
+  renderAchievements();
+  renderShop();
   renderRecent();
   renderLog();   // 그래프·최고 기록 포함
 }
@@ -3597,6 +4154,7 @@ function bindUI(){
   $("#btnLogout").addEventListener("click", signOut);
 
   $("#btnGoal").addEventListener("click", openGoalModal);
+  $("#btnTree").addEventListener("click", toggleTree);
   $("#btnSimple").addEventListener("click", function(){ applySimple(!S.simple); });
   initCharts();
 
@@ -3609,7 +4167,9 @@ function bindUI(){
   let reflow = null;
   window.addEventListener("resize", function(){
     clearTimeout(reflow);
-    reflow = setTimeout(function(){ if (S.view === "log") renderCharts(); }, 180);
+    reflow = setTimeout(function(){
+      if (S.view === "log"){ renderCharts(); renderCalendar(); }
+    }, 180);
   });
 
   /* 화면을 볼 때만 '보고 있다'는 표시를 갱신합니다. 다른 앱으로 넘어가거나
@@ -3649,6 +4209,9 @@ async function boot(){
   if (!initClient()) return;
   safe("theme", initTheme);
   safe("simple", function(){ loadSimple(); applySimple(S.simple); });
+  safe("tree", function(){
+    try { const v = localStorage.getItem(LS.tree); if (v !== null) S.tree = (v === "1"); } catch (e) {}
+  });
   safe("nav", initNav);
   safe("routing", initRouting);
   safe("ui", bindUI);
