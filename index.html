@@ -364,6 +364,8 @@ button.row:hover{ background:var(--surface-2); }
   font-size:.86rem; font-weight:550; color:var(--muted);
   transition:background .16s ease, color .16s ease;
 }
+.seg__note{ margin-top:10px; font-size:.75rem; color:var(--muted); line-height:1.6; }
+.seg__note b{ color:var(--text-dim); font-weight:600; }
 .seg__opt[aria-pressed="true"]{ background:var(--surface); color:var(--text); }
 
 .avatar{
@@ -662,6 +664,32 @@ button.row:hover{ background:var(--surface-2); }
   .clock{ font-size:4.8rem; }
 }
 </style>
+
+<script>
+/* 화면을 그리기 전에 테마부터 정합니다.
+   · 저장해 둔 설정이 있으면 그것을 씁니다(저장소를 못 쓰면 쿠키를 봅니다).
+   · 없으면 휴대폰 설정을 따르고, 그것도 알 수 없으면 다크로 시작합니다.
+   여기서 미리 정해두지 않으면 밝은 화면이 한 번 번쩍였다가 바뀝니다. */
+(function(){
+  try {
+    var pref = null;
+    try { pref = localStorage.getItem("jari.theme"); } catch (e) {}
+    if (!pref){
+      var m = /(?:^|;\s*)jari_theme=([^;]+)/.exec(document.cookie || "");
+      if (m) pref = decodeURIComponent(m[1]);
+    }
+    var mode = pref;
+    if (mode !== "dark" && mode !== "light"){
+      mode = "dark";
+      if (window.matchMedia){
+        if (window.matchMedia("(prefers-color-scheme: light)").matches) mode = "light";
+        if (window.matchMedia("(prefers-color-scheme: dark)").matches)  mode = "dark";
+      }
+    }
+    document.documentElement.setAttribute("data-theme", mode);
+  } catch (e) {}
+})();
+</script>
 </head>
 
 <body>
@@ -823,6 +851,7 @@ button.row:hover{ background:var(--surface-2); }
             <button class="seg__opt" data-theme-set="light" aria-pressed="false">화이트</button>
             <button class="seg__opt" data-theme-set="system" aria-pressed="false">시스템</button>
           </div>
+          <p class="seg__note">앱 안에서 열리는 브라우저(카카오톡 등)는 휴대폰의 다크 모드를 알려주지 않는 경우가 있습니다. 휴대폰을 다크로 해도 밝게 보이면 <b>다크</b>를 직접 골라주세요. 한 번 고르면 계속 유지됩니다.</p>
         </div>
 
         <div class="section">
@@ -1114,11 +1143,22 @@ const CONFIG = {
   OWNER_NAME:    "자리 운영자",
   CONTACT_EMAIL: "k43576a@gmail.com",
   EFFECTIVE_DATE:"2026년 9월 9일",
-  VERSION:       "1.0.5"
+  VERSION:       "1.0.6"
 };
 
 /* 업데이트 내역 — 새 버전은 배열 맨 앞에 추가하세요. */
 const CHANGELOG = [
+  {
+    v: "1.0.6",
+    d: "2026-09-10",
+    items: [
+      "일부 브라우저에서 앱이 아예 켜지지 않던 문제를 고쳤습니다. 화면 밝기를 확인하는 부분에서 오류가 나면 그 뒤 준비가 통째로 멈췄습니다.",
+      "휴대폰의 다크 모드를 더 정확하게 알아봅니다.",
+      "다크·화이트를 직접 고르면 저장소를 못 쓰는 브라우저에서도 계속 유지됩니다.",
+      "앱을 열 때 밝은 화면이 한 번 번쩍였다가 어두워지던 것을 없앴습니다.",
+      "설정 화면에 앱 내 브라우저 관련 안내를 넣었습니다."
+    ]
+  },
   {
     v: "1.0.5",
     d: "2026-09-10",
@@ -1290,31 +1330,62 @@ function initViewport(){
   setTimeout(fitViewport, 1200);
 }
 
-/* ===================== [4] 테마 ===================== */
-const media = window.matchMedia("(prefers-color-scheme: light)");
+/* ===================== [4] 테마 =====================
+   휴대폰의 다크 모드는 (prefers-color-scheme) 로 알아냅니다.
+   그런데 앱 안의 브라우저(카카오톡·인스타 등)는 이 값을 넘겨주지 않는 것도
+   있습니다. 그런 곳에서는 '시스템' 으로 두면 휴대폰을 다크로 해도 밝게 보입니다.
+   설정에서 '다크' 를 직접 고르면 그 값이 저장되어 계속 적용됩니다. */
+const mqDark  = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)")  : null;
+const mqLight = window.matchMedia ? window.matchMedia("(prefers-color-scheme: light)") : null;
 
+function systemTheme(){
+  if (mqDark  && mqDark.matches)  return "dark";
+  if (mqLight && mqLight.matches) return "light";
+  return "dark";                      // 휴대폰 설정을 알 수 없으면 다크
+}
 function resolveTheme(pref){
-  if (pref === "light" || pref === "dark") return pref;
-  return media.matches ? "light" : "dark";
+  return (pref === "light" || pref === "dark") ? pref : systemTheme();
+}
+function currentPref(){
+  try { const v = localStorage.getItem(LS.theme); if (v) return v; } catch (e) {}
+  const m = /(?:^|;\s*)jari_theme=([^;]+)/.exec(document.cookie || "");
+  return m ? decodeURIComponent(m[1]) : "system";
+}
+/* 저장소를 못 쓰는 브라우저(사생활 보호 모드, 일부 인앱 브라우저)를 위해
+   쿠키에도 같이 적어둡니다. 둘 중 하나만 살아 있어도 설정이 유지됩니다. */
+function savePref(pref){
+  try { localStorage.setItem(LS.theme, pref); } catch (e) {}
+  try {
+    document.cookie = "jari_theme=" + encodeURIComponent(pref) +
+      ";path=/;max-age=31536000;samesite=lax" +
+      (location.protocol === "https:" ? ";secure" : "");
+  } catch (e) {}
 }
 function applyTheme(pref){
   const mode = resolveTheme(pref);
   document.documentElement.setAttribute("data-theme", mode);
-  try { localStorage.setItem(LS.theme, pref); } catch (e) {}
+  savePref(pref);
   $$("[data-theme-set]").forEach(function(b){
     b.setAttribute("aria-pressed", String(b.dataset.themeSet === pref));
   });
   /* 그래프는 테마 색을 값으로 읽어 그리므로 다시 그려줍니다. */
   if (S.ready && S.view === "log") renderChart();
 }
-function currentPref(){
-  try { return localStorage.getItem(LS.theme) || "system"; } catch (e) { return "system"; }
+/* 휴대폰 설정이 바뀌면 따라갑니다.
+   오래된 브라우저는 addEventListener 가 없어서 addListener 를 씁니다.
+   (예전에는 이 줄에서 오류가 나면 앱 전체가 뜨지 않았습니다) */
+function onSystemThemeChange(fn){
+  [mqDark, mqLight].forEach(function(mq){
+    if (!mq) return;
+    try {
+      if (typeof mq.addEventListener === "function") mq.addEventListener("change", fn);
+      else if (typeof mq.addListener === "function") mq.addListener(fn);
+    } catch (e) {}
+  });
 }
 function initTheme(){
   applyTheme(currentPref());
-  media.addEventListener("change", function(){
-    if (currentPref() === "system") applyTheme("system");
-  });
+  onSystemThemeChange(function(){ if (currentPref() === "system") applyTheme("system"); });
   $$("[data-theme-set]").forEach(function(b){
     b.addEventListener("click", function(){ applyTheme(b.dataset.themeSet); });
   });
@@ -2930,21 +3001,28 @@ function bindUI(){
   });
 }
 
+/* 준비 단계 하나가 실패해도 나머지는 계속 준비되도록 감싸줍니다.
+   예전에는 테마 준비에서 오류가 나면 그 뒤(사이드바·버튼 연결)가 통째로
+   실행되지 않아, 화면만 뜨고 아무것도 눌리지 않는 상태가 됐습니다. */
+function safe(name, fn){
+  try { fn(); } catch (e) { console.error("[" + name + "] 준비 중 오류", e); }
+}
+
 async function boot(){
-  initViewport();
+  safe("viewport", initViewport);
   if (!initClient()) return;
   try {
     const saved = localStorage.getItem(LS.chart);
     if (saved) S.chart = saved;
   } catch (e) {}
-  initTheme();
-  initNav();
-  initRouting();
-  bindUI();
-  renderPrivacy();
-  renderChangelog();
-  loadTimer();
-  paintTimer();
+  safe("theme", initTheme);
+  safe("nav", initNav);
+  safe("routing", initRouting);
+  safe("ui", bindUI);
+  safe("privacy", renderPrivacy);
+  safe("changelog", renderChangelog);
+  safe("timer", loadTimer);
+  safe("paint", paintTimer);
 
   // OAuth 리다이렉트로 들어온 경우 주소창 정리
   if (location.hash.indexOf("access_token") >= 0 || location.search.indexOf("code=") >= 0){
@@ -3005,7 +3083,9 @@ async function handleSession(session){
   flushTimerNotice();
 }
 
-document.addEventListener("DOMContentLoaded", boot);
+document.addEventListener("DOMContentLoaded", function(){
+  boot().catch(bootFailed);
+});
 </script>
 </body>
 </html>
