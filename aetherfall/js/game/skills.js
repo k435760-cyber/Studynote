@@ -412,7 +412,7 @@ export const SKILLS = {
   shadowstep: {
     id: 'shadowstep', name: '그림자 도약', icon: 'shadowstep', tag: '이동',
     cost: 25, cooldown: 5, aim: 'direction',
-    desc: (r) => `그림자를 타고 앞으로 빠져나갑니다. 도착한 뒤 ${num(3)}초 안에 하는 첫 공격은 반드시 치명타가 됩니다.`,
+    desc: (r) => `그림자를 타고 앞으로 빠져나갑니다. 지나치는 적에게 ${pct(sc(2.2, r))} 피해를 주고, 도착한 뒤 ${num(3)}초 안에 하는 첫 공격은 반드시 치명타가 됩니다.`,
     exec(g, p, aim, r) {
       sfx('stealth');
       const ang = aim.angle;

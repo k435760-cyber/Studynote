@@ -648,7 +648,10 @@ export class Game {
     const aetherRoll = isBoss ? 26 + this.run.floor * 2 : isElite ? 6 : (chance(0.35) ? randInt(1, 3) : 0);
     if (aetherRoll > 0) this.pickups.push(new Pickup(enemy.x, enemy.y, 'aether', aetherRoll));
     if (chance(isBoss ? 1 : isElite ? 0.55 : 0.09)) {
-      const item = makeItem(this.run.floor, { luck: this.luck + (isBoss ? 0.6 : isElite ? 0.25 : 0) });
+      const item = makeItem(this.run.floor, {
+        luck: this.luck + (isBoss ? 0.6 : isElite ? 0.25 : 0),
+        classId: this.player.classId,
+      });
       this.pickups.push(new Pickup(enemy.x, enemy.y, 'item', 0, item));
     }
     if (chance(isBoss ? 1 : 0.08)) {
@@ -790,7 +793,7 @@ export class Game {
     fx.light(chest.x, chest.y, 460, 'rgba(226,201,138,0.6)', { life: 0.6 });
     const count = 1 + (chance(0.4) ? 1 : 0);
     for (let i = 0; i < count; i++) {
-      const item = makeItem(this.run.floor + 2, { luck: this.luck + 0.35 });
+      const item = makeItem(this.run.floor + 2, { luck: this.luck + 0.35, classId: this.player.classId });
       this.pickups.push(new Pickup(chest.x + rand(-40, 40), chest.y + rand(-40, 40), 'item', 0, item));
     }
     this.pickups.push(new Pickup(chest.x, chest.y, 'aether', randInt(6, 14) + this.run.floor));

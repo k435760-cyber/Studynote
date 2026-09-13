@@ -18,14 +18,16 @@ export const SLOTS = {
   relic:  { id: 'relic',  name: '유물' },
 };
 
+/* 무기는 직업에 맞는 것만 나온다. 마법사가 대검을 드는 그림은 보고 싶지 않다. */
+const WEAPONS = {
+  guardian:  [{ name: '맹세의 장검', base: 0.09 }, { name: '파수의 철퇴', base: 0.092 }, { name: '방패술사의 창', base: 0.094 }],
+  oracle:    [{ name: '성흔의 홀', base: 0.091 }, { name: '기도의 지팡이', base: 0.095 }, { name: '봉헌의 낫', base: 0.093 }],
+  berserker: [{ name: '파쇄 도끼', base: 0.1 }, { name: '균열 대검', base: 0.098 }, { name: '쌍날 도끼', base: 0.102 }],
+  arcanist:  [{ name: '봉인된 지팡이', base: 0.095 }, { name: '수정 지팡이', base: 0.097 }, { name: '비전의 홀', base: 0.093 }],
+  shade:     [{ name: '속삭이는 단검', base: 0.085 }, { name: '그림자 비수', base: 0.088 }, { name: '독니 단검', base: 0.086 }],
+};
+
 const BASES = {
-  weapon: [
-    { name: '균열검', stat: 'damage', base: 0.09 },
-    { name: '파쇄 도끼', stat: 'damage', base: 0.1 },
-    { name: '봉인된 지팡이', stat: 'damage', base: 0.095 },
-    { name: '속삭이는 단검', stat: 'damage', base: 0.085 },
-    { name: '성흔의 철퇴', stat: 'damage', base: 0.092 },
-  ],
   armor: [
     { name: '잿빛 갑주', stat: 'armor', base: 12 },
     { name: '가죽 흉갑', stat: 'armor', base: 9 },
@@ -42,7 +44,7 @@ const BASES = {
   ],
 };
 
-const PREFIX = ['벼려진', '잿더미의', '서리 맺힌', '공허가 스민', '피에 젖은', '고요한', '갈라진', '별빛의', '잊혀진', '불타는'];
+const PREFIX = ['벼려진', '잿더미의', '서리 맺힌', '공허가 스민', '피에 젖은', '고요한', '갈라진', '별빛의', '잊힌', '불타는'];
 const SUFFIX = ['광휘', '집념', '심연', '맹세', '균열', '추적', '침묵', '잔영', '파문', '각인'];
 
 /* 옵션 정의. value 는 아이템 레벨 1 기준이고 여기에 레벨과 등급 배율을 곱한다. */
@@ -95,7 +97,9 @@ export function makeItem(floor, opts = {}) {
   const rarityId = opts.rarity || rollRarity(floor, opts.luck || 0);
   const rarity = RARITIES[rarityId];
   const ilvl = Math.max(1, opts.ilvl || floor + randInt(-1, 2));
-  const base = pick(BASES[slot]);
+  const base = slot === 'weapon'
+    ? { ...pick(WEAPONS[opts.classId] || WEAPONS.guardian), stat: 'damage' }
+    : pick(BASES[slot]);
 
   const stats = {};
   const levelMul = 1 + (ilvl - 1) * 0.22;
@@ -112,9 +116,10 @@ export function makeItem(floor, opts = {}) {
     lines.push(a.key);
   }
 
-  const name = rarityId === 'common'
-    ? base.name
-    : `${pick(PREFIX)} ${base.name}${rarityId === 'legendary' || rarityId === 'epic' ? ' · ' + pick(SUFFIX) : ''}`;
+  /* '별빛의 파수의 철퇴' 처럼 '의' 가 겹치면 읽기 나쁘다. 그런 조합은 피한다. */
+  const prefixes = base.name.includes('의') ? PREFIX.filter((x) => !x.endsWith('의')) : PREFIX;
+  const suffix = rarityId === 'legendary' || rarityId === 'epic' ? ` · ${pick(SUFFIX)}` : '';
+  const name = rarityId === 'common' ? base.name : `${pick(prefixes)} ${base.name}${suffix}`;
 
   return {
     uid: nextId(),

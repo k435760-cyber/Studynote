@@ -296,7 +296,9 @@ html, body{
 .down{ color: var(--danger); font-size: .76rem; }
 
 /* 스킬 */
-.skills{ display: grid; gap: 10px; max-width: 900px; }
+/* 넓은 화면에서는 두 줄로 벌려 놓는다. 한 줄로 길게 늘어뜨리면 시선이 멀리 간다. */
+.skills{ display: grid; gap: 10px; max-width: 1280px; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); }
+.skills > p{ grid-column: 1 / -1; }
 .skill-row{ display: grid; grid-template-columns: 54px 1fr auto; gap: 14px; align-items: center; padding: 14px 16px; }
 .skill-row.is-ult{ border-color: rgba(226,201,138,.4); }
 .skill-row__icon{
