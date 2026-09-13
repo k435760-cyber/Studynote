@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="shard" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a8e6ff"/>
+      <stop offset="1" stop-color="#7059dc"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0a0f1c"/>
+  <circle cx="32" cy="32" r="22" fill="none" stroke="#5cc4f0" stroke-width="1.6" opacity=".85"/>
+  <g fill="#8fd8f5">
+    <circle cx="47.6" cy="16.4" r="2.2"/><circle cx="16.4" cy="16.4" r="2.2"/>
+    <circle cx="47.6" cy="47.6" r="2.2"/><circle cx="16.4" cy="47.6" r="2.2"/>
+  </g>
+  <path d="M32 9 L42 32 L32 55 L22 32 Z" fill="url(#shard)"/>
+  <path d="M32 14 L34.6 32 L32 50 L29.4 32 Z" fill="#ffffff" opacity=".92"/>
+</svg>

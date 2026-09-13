@@ -1,0 +1,20 @@
+{
+  "name": "Aetherfall · 에테르폴",
+  "short_name": "Aetherfall",
+  "description": "균열 아래로 내려가는 액션 RPG. 다섯 직업, 절차적으로 만들어지는 층, 그리고 끝을 알 수 없는 깊이.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "id": "/aetherfall/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "orientation": "landscape",
+  "background_color": "#05070d",
+  "theme_color": "#0a0d16",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "./assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
